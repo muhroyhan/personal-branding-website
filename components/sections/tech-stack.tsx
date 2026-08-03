@@ -5,8 +5,8 @@ export function TechStack() {
     <section id="stack" className="border-b border-border px-6 py-24">
       <div className="mx-auto max-w-3xl">
         <div className="mb-16 flex flex-col items-center gap-3 text-center">
-          <span className="font-mono text-caption tracking-wide text-muted-foreground/60 uppercase">
-            §05 — Stack
+          <span className="font-mono text-caption tracking-wide text-accent uppercase">
+            The evidence
           </span>
           <h2 className="font-display text-h2 font-semibold text-fg">Tech Stack</h2>
           <p className="max-w-xl text-body text-muted-foreground">

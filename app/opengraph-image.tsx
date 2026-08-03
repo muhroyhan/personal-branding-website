@@ -39,7 +39,7 @@ export default async function OpengraphImage() {
             maxWidth: 950,
           }}
         >
-          I design payroll systems that don&apos;t get tax calculations wrong.
+          Every system breaks. I design for the moment it does.
         </div>
         <div style={{ display: "flex", fontSize: 30, color: "#8b96a3", marginTop: 32 }}>
           Tech Lead &amp; Senior Software Engineer

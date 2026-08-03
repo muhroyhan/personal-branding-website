@@ -1,77 +1,155 @@
-export type CareerNode = {
+export type StoryAct = {
   id: string;
+  year: string;
   role: string;
-  period: string;
-  summary: string;
+  title: string;
 };
 
-export const CAREER_TIMELINE: CareerNode[] = [
+/**
+ * The homepage is one continuous story; these five acts are its spine.
+ * `id` doubles as the section anchor and as the StoryRail's observer target,
+ * so renaming one means updating the nav links in navbar/footer too.
+ */
+export const STORY_ACTS: StoryAct[] = [
   {
-    id: "junior-software-engineer",
+    id: "act-beginnings",
+    year: "2019",
     role: "Junior Software Engineer",
-    period: "Jun 2019 – Dec 2020",
-    summary:
-      "Started as a fullstack generalist, thrown at problems before I felt ready for them — the company's first Flutter app, then production React.js / Express.js work. I learned more from being underprepared than I would have from being comfortable.",
+    title: "The one who wasn't ready",
   },
   {
-    id: "software-engineer",
-    role: "Software Engineer",
-    period: "Jan 2021 – Dec 2021",
-    summary:
-      "Took on more ownership across web and mobile delivery. This is where I noticed most 'technical' decisions were really judgment calls made under incomplete information — and started treating them that way.",
+    id: "act-cost",
+    year: "2021",
+    role: "Software Engineer → Senior",
+    title: "The cost nobody bills you for",
   },
   {
-    id: "senior-software-engineer",
+    id: "act-decision",
+    year: "2022",
     role: "Senior Software Engineer",
-    period: "Jan 2022 – Dec 2022",
-    summary:
-      "Promoted twice within three years. Handed over three production projects to clients end-to-end — each one a lesson in designing for handoff, not just for launch.",
+    title: "The decision",
   },
   {
-    id: "tech-lead",
+    id: "act-people",
+    year: "2023",
     role: "Tech Lead",
-    period: "Jan 2023 – Present",
-    summary:
-      "Leading 2 client projects and 2 engineers from requirement scoping through production deployment. Architected an enterprise payroll system (800+ employees) and a reusable NestJS/React.js backend architecture now adopted across multiple client projects. Contributing to an international engineering project spanning teams in multiple countries. The through-line: control the structure, accept the uncertainty, design for both.",
+    title: "When the variables are people",
+  },
+  {
+    id: "act-now",
+    year: "Now",
+    role: "Tech Lead",
+    title: "Where that leaves me",
   },
 ];
 
-export type ArchitectureDecision = {
+export const ACT_ONE_PARAGRAPHS = [
+  "Moving Bytes Digital hired me as a junior and then, fairly quickly, stopped treating me like one. The company's first Flutter app shipped with my name on it. Production React.js and Express.js work followed — mostly problems nobody had fully solved yet, handed to whoever was free. That was usually me.",
+  "I was underprepared for most of it, and that turned out to be the useful part. Being out of my depth forced a question I couldn't answer with better syntax: how do you make good decisions when you don't control most of the variables?",
+  "At the time I assumed it was a temporary problem — something more experience would eventually dissolve. It didn't.",
+];
+
+export const ACT_TWO_PARAGRAPHS = [
+  "A second client project arrived. Then a third. The same four problems every time — auth, job queues, error handling, the shape of a survivable migration — solved again from scratch, slightly differently, by whoever reached them first.",
+  "I was promoted twice across those two years. It would be a better story if those promotions had come from solving that. They didn't. They came from shipping, and shipping fast was quietly making everything after it slower.",
+  "By the third codebase the arithmetic was hard to ignore: three versions of the same decision, three places for the same bug to live. Fixing something once no longer meant it was fixed. I had been optimising for output while the structure underneath got more expensive to change every month — and I was being rewarded for it the entire time.",
+  "That's the part I'd want you to read carefully. Not that I found the answer, but that it took me two years and three codebases to admit there was a question.",
+];
+
+export const ACT_FOUR_PARAGRAPHS = [
+  "In 2023 I became Tech Lead: two client projects, two engineers, scoping through to production. The first thing leading changes is the variable count. Code does what you tell it. People, deadlines, and shifting priorities do not.",
+  "The clearest test was an enterprise payroll system running for more than 800 employees. A wrong number there isn't a bug report — it's somebody's paycheck. So I built for traceability and recovery before raw speed. Every write path costs more design work upfront; in exchange, every number in the system can be explained instead of trusted.",
+  "Scaling the team needed the same instinct. I split ownership by domain module rather than by ticket. It demanded tighter documentation than anyone enjoys writing, and it let two engineers move in parallel without blocking on each other — or on me.",
+  "Contributing to an international project spanning teams across countries and timezones only sharpened the point. The further a system spreads, the less of it you control directly, and the more the structure has to hold on its own.",
+];
+
+export const ACT_FIVE_PARAGRAPHS = [
+  "I still don't have a clean answer, and I've stopped expecting one. What I have is a method that works: separate the variables you can actually design — boundaries, ownership, observability, what happens on failure — from the ones you can only respond to. Spend your effort almost entirely on the first set. Build so the second set can't take you down.",
+  "That isn't a philosophy I read somewhere and applied. It's what seven years, three promotions, and one expensive detour through three duplicated codebases taught me — and it's what I'd bring to your team well before any particular framework.",
+];
+
+export type ArchitectureStoryStep = {
   id: string;
-  title: string;
-  context: string;
-  decision: string;
-  tradeoff: string;
+  caption: string;
+  body: string;
 };
 
-export const ARCHITECTURE_DECISIONS: ArchitectureDecision[] = [
+/**
+ * ADR-01 ("Reusable patterns over one-off builds") retold as a five-beat
+ * scroll narrative — the diagram in `architecture-story.tsx` keys its state
+ * off this array's index, so reordering or resizing it changes the animation.
+ */
+export const ARCHITECTURE_STORY: ArchitectureStoryStep[] = [
   {
-    id: "reusable-backend-patterns",
-    title: "Reusable patterns over one-off builds",
-    context:
-      "Every new client project re-solved the same structural problems from scratch — auth, job queues, error handling.",
-    decision:
-      "Extracted a reusable NestJS/React.js backend architecture instead of optimizing each project in isolation.",
-    tradeoff:
-      "Slower on the first project it touched. Every project after that started from a stronger baseline instead of zero.",
+    id: "one-project",
+    caption: "One project",
+    body: "2019. One client, one codebase. Auth, job queues, error handling — all written from scratch, and all of it perfectly fine. At this size, nothing about it looks like a problem yet.",
   },
   {
-    id: "auditability-over-speed",
-    title: "Auditability over raw speed",
-    context:
-      "An enterprise payroll system for 800+ employees, where a wrong number isn't a bug report — it's a paycheck someone depends on.",
-    decision: "Built for traceability and recovery first, raw performance second.",
-    tradeoff:
-      "More upfront design work on every write path. In exchange, every number in the system can be explained, not just trusted.",
+    id: "second-project",
+    caption: "A second project",
+    body: "Then a second project landed. Same four problems, solved again — slightly differently, by whoever reached them first. Still defensible. Still just a little duplication.",
   },
   {
-    id: "ownership-by-domain",
-    title: "Ownership split by domain, not by ticket",
-    context:
-      "Systems I used to own alone started needing more than one person to move at the pace clients expected.",
-    decision: "Split ownership by domain module rather than by feature ticket.",
-    tradeoff:
-      "Required tighter documentation upfront. Let the team parallelize work without blocking on each other.",
+    id: "third-project",
+    caption: "The cost shows up",
+    body: "By the third, the cost stopped being theoretical. Three codebases, three versions of the same decisions, three separate places for the same bug to live. Fixing something once no longer meant it was fixed.",
+  },
+  {
+    id: "extract-core",
+    caption: "Extracting the core",
+    body: "So I stopped optimizing individual projects and started extracting what they already shared — auth, queues, error handling, the boring parts nobody wants to rewrite and everybody rewrites anyway.",
+  },
+  {
+    id: "shared-foundation",
+    caption: "A foundation to start from",
+    body: "Now a new project doesn't start at zero. It starts on a foundation three projects have already stress-tested. The first one cost me time I couldn't bill. Every one since has been faster — which is the whole trade, stated honestly.",
+  },
+];
+
+export type DichotomyItem = {
+  id: string;
+  label: string;
+  category: "controllable" | "uncontrollable";
+  note: string;
+};
+
+export const DICHOTOMY_ITEMS: DichotomyItem[] = [
+  {
+    id: "traffic-spikes",
+    label: "Traffic spikes on launch day",
+    category: "uncontrollable",
+    note: "You can't control demand. You can control whether the system degrades gracefully or falls over.",
+  },
+  {
+    id: "client-deadline",
+    label: "A client's deadline",
+    category: "uncontrollable",
+    note: "Rarely yours to set. What's yours is how honestly you scope against it.",
+  },
+  {
+    id: "codebase-structure",
+    label: "How the codebase is structured",
+    category: "controllable",
+    note: "This one's actually yours. Most of the job lives here.",
+  },
+  {
+    id: "teammate-debugging",
+    label: "A teammate's debugging style",
+    category: "uncontrollable",
+    note: "You can share context and docs. You can't make someone think the way you do.",
+  },
+  {
+    id: "third-party-uptime",
+    label: "Whether a third-party API stays up",
+    category: "uncontrollable",
+    note: "You only control how your system behaves when it doesn't.",
+  },
+  {
+    id: "test-coverage",
+    label: "Test coverage on what you ship",
+    category: "controllable",
+    note: "Nobody else decides this. If it's thin, that was a choice.",
   },
 ];
 

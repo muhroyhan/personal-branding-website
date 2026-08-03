@@ -6,14 +6,17 @@ export function WorkCard({ item }: { item: WorkListItem }) {
   return (
     <Link
       href={`/work/${item.slug}`}
-      className="group flex flex-col gap-4 rounded-lg border border-border-strong bg-card p-6 transition-colors hover:border-accent"
+      className="group flex flex-col gap-4 rounded-lg border border-border-strong bg-card p-6 transition-all duration-200 hover:border-accent hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/20"
     >
       <div>
         <p className="font-mono text-caption tracking-wide text-muted-foreground uppercase">
           {item.frontmatter.date}
         </p>
-        <h3 className="mt-2 font-display text-h4 font-semibold text-fg transition-colors group-hover:text-accent">
+        <h3 className="mt-2 flex items-center gap-1.5 font-display text-h4 font-semibold text-fg transition-colors group-hover:text-accent">
           {item.frontmatter.title}
+          <span className="-translate-x-1 opacity-0 transition-all duration-200 group-hover:translate-x-0 group-hover:opacity-100">
+            →
+          </span>
         </h3>
       </div>
       <p className="text-body text-muted-foreground">{item.frontmatter.summary}</p>
@@ -41,12 +44,12 @@ export async function WorkPreview() {
     <section id="work" className="border-b border-border px-6 py-24">
       <div className="mx-auto max-w-5xl">
         <div className="mb-16 flex flex-col items-center gap-3 text-center">
-          <span className="font-mono text-caption tracking-wide text-muted-foreground/60 uppercase">
-            §04 — Work
+          <span className="font-mono text-caption tracking-wide text-accent uppercase">
+            The evidence
           </span>
           <h2 className="font-display text-h2 font-semibold text-fg">Selected Work</h2>
           <p className="max-w-xl text-body text-muted-foreground">
-            A few production systems I&apos;ve architected and shipped.
+            The systems behind the story, written up in full.
           </p>
         </div>
 
