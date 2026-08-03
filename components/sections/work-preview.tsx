@@ -41,6 +41,9 @@ export async function WorkPreview() {
     <section id="work" className="border-b border-border px-6 py-24">
       <div className="mx-auto max-w-5xl">
         <div className="mb-16 flex flex-col items-center gap-3 text-center">
+          <span className="font-mono text-caption tracking-wide text-muted-foreground/60 uppercase">
+            §04 — Work
+          </span>
           <h2 className="font-display text-h2 font-semibold text-fg">Selected Work</h2>
           <p className="max-w-xl text-body text-muted-foreground">
             A few production systems I&apos;ve architected and shipped.

@@ -25,6 +25,9 @@ export function ContactCta() {
       id="contact"
       className="flex flex-col items-center gap-8 border-b border-border px-6 py-24 text-center"
     >
+      <span className="font-mono text-caption tracking-wide text-muted-foreground/60 uppercase">
+        §06 — Contact
+      </span>
       <h2 className="font-display text-h2 font-semibold text-fg">Let&apos;s talk</h2>
       <p className="max-w-md text-body text-muted-foreground">
         Open to Tech Lead / Senior Software Engineer roles, remote-first. Reach out

@@ -4,9 +4,15 @@ export function TechStack() {
   return (
     <section id="stack" className="border-b border-border px-6 py-24">
       <div className="mx-auto max-w-3xl">
-        <h2 className="mb-16 text-center font-display text-h2 font-semibold text-fg">
-          Tech Stack
-        </h2>
+        <div className="mb-16 flex flex-col items-center gap-3 text-center">
+          <span className="font-mono text-caption tracking-wide text-muted-foreground/60 uppercase">
+            §05 — Stack
+          </span>
+          <h2 className="font-display text-h2 font-semibold text-fg">Tech Stack</h2>
+          <p className="max-w-xl text-body text-muted-foreground">
+            The tools I reach for — chosen for what stays boring under pressure.
+          </p>
+        </div>
 
         <div className="grid grid-cols-1 gap-10 sm:grid-cols-3 sm:gap-12">
           {TECH_STACK_GROUPS.map((group) => (

@@ -22,9 +22,12 @@ export function CareerTimeline() {
   return (
     <section id="career" className="border-b border-border px-6 py-24">
       <div className="mx-auto max-w-2xl">
-        <h2 className="mb-16 text-center font-display text-h2 font-semibold text-fg">
-          Career Timeline
-        </h2>
+        <div className="mb-16 flex flex-col items-center gap-3 text-center">
+          <span className="font-mono text-caption tracking-wide text-muted-foreground/60 uppercase">
+            §02 — Career
+          </span>
+          <h2 className="font-display text-h2 font-semibold text-fg">Career Timeline</h2>
+        </div>
 
         <div ref={trackRef} className="relative">
           <div

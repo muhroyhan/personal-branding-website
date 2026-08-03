@@ -3,9 +3,9 @@
 import { Fragment } from "react";
 import { motion, type Variants } from "motion/react";
 
-const HEADLINE = "I design payroll systems that don't get tax calculations wrong.";
+const HEADLINE = "Every system breaks. I design for the moment it does.";
 const SUBTITLE =
-  "Tech Lead & Senior Software Engineer — 7+ years building backend architecture that has to be correct: idempotent, auditable, and production-grade.";
+  "Tech Lead & Senior Software Engineer — 7+ years architecting backend systems that scale with the team, not just the traffic. I lean on systems thinking and a Stoic bias for what's controllable to make that hold under pressure.";
 
 const HEADLINE_WORDS = HEADLINE.split(" ");
 
