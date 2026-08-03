@@ -1,5 +1,6 @@
 "use client";
 
+import { Fragment } from "react";
 import { motion, type Variants } from "motion/react";
 
 const HEADLINE = "I design payroll systems that don't get tax calculations wrong.";
@@ -45,9 +46,12 @@ export function Hero() {
         className="max-w-3xl font-display text-4xl font-semibold text-fg sm:text-h1"
       >
         {HEADLINE_WORDS.map((w, i) => (
-          <motion.span key={i} variants={word} className="mr-[0.22em] inline-block">
-            {w}
-          </motion.span>
+          <Fragment key={i}>
+            <motion.span variants={word} className="inline-block">
+              {w}
+            </motion.span>
+            {i < HEADLINE_WORDS.length - 1 ? " " : ""}
+          </Fragment>
         ))}
       </motion.h1>
 
