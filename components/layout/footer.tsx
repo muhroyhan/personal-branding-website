@@ -2,10 +2,10 @@ import Link from "next/link";
 import { CONTACT_LINKS } from "@/lib/constants";
 
 const FOOTER_LINKS = [
-  { href: "#about", label: "About" },
-  { href: "#work", label: "Work" },
-  { href: "#stack", label: "Stack" },
-  { href: "#contact", label: "Contact" },
+  { href: "/#about", label: "About" },
+  { href: "/#work", label: "Work" },
+  { href: "/#stack", label: "Stack" },
+  { href: "/#contact", label: "Contact" },
 ];
 
 const CONTACT_FOOTER_LINKS = [
