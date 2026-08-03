@@ -1,0 +1,113 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+/*
+ * Design tokens — ai_dev_doc.md §4.
+ * Dark-only palette (decision #4: no light/dark toggle), single amber-gold
+ * accent used sparingly (CTA, active timeline node, progress lines).
+ */
+:root {
+  --bg: #0b0f14;
+  --fg: #e8ecef;
+  --card: #151b23;
+  --border: #2a323c;
+  /* Decorative dividers (--border) sit at ~1.5:1 against bg, which is fine
+     for non-text separators but fails WCAG 1.4.11 (3:1) as a UI component
+     boundary. --border-strong is for anything that needs to read as an
+     actual button/card edge (buttons, clickable cards, inputs). */
+  --border-strong: #637184;
+  --accent: #d4a24e;
+  --accent-fg: #0b0f14;
+  --muted-fg: #8b96a3;
+  --radius: 0.625rem;
+}
+
+@theme inline {
+  /* semantic colors (ai_dev_doc.md §4) */
+  --color-bg: var(--bg);
+  --color-fg: var(--fg);
+  --color-card: var(--card);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-fg);
+  --color-muted-foreground: var(--muted-fg);
+  --color-ring: var(--accent);
+
+  /* shadcn/ui compatibility aliases — keep component defaults on-brand */
+  --color-background: var(--bg);
+  --color-foreground: var(--fg);
+  --color-card-foreground: var(--fg);
+  --color-primary: var(--accent);
+  --color-primary-foreground: var(--accent-fg);
+  --color-secondary: var(--card);
+  --color-secondary-foreground: var(--fg);
+  --color-muted: var(--card);
+  --color-popover: var(--card);
+  --color-popover-foreground: var(--fg);
+  --color-input: var(--border);
+
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+
+  /* typography — ai_dev_doc.md §4 */
+  --font-display: var(--font-space-grotesk);
+  --font-body: var(--font-inter);
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-jetbrains-mono);
+
+  /* type scale */
+  --text-h1: 3.5rem;
+  --text-h1--line-height: 1.1;
+  --text-h1--letter-spacing: -0.02em;
+
+  --text-h2: 2.5rem;
+  --text-h2--line-height: 1.15;
+  --text-h2--letter-spacing: -0.015em;
+
+  --text-h3: 1.75rem;
+  --text-h3--line-height: 1.25;
+  --text-h3--letter-spacing: -0.01em;
+
+  --text-h4: 1.25rem;
+  --text-h4--line-height: 1.35;
+
+  --text-body: 1rem;
+  --text-body--line-height: 1.6;
+
+  --text-caption: 0.8125rem;
+  --text-caption--line-height: 1.4;
+  --text-caption--letter-spacing: 0.02em;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-bg text-fg;
+  }
+  html {
+    @apply font-sans;
+  }
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+}
+
+/*
+ * Scroll-linked motion values (useScroll/useSpring) bind directly to a style
+ * prop and bypass MotionConfig's reducedMotion="user" transform-snapping, so
+ * they need their own escape hatch. A plain CSS override — evaluated
+ * identically pre- and post-hydration — avoids branching the component's
+ * render output on the media query (which would cause an SSR/CSR mismatch).
+ */
+@media (prefers-reduced-motion: reduce) {
+  .timeline-draw {
+    transform: scaleY(1) !important;
+  }
+}

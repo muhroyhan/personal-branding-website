@@ -1,0 +1,20 @@
+# Muhammad Royhan
+
+> Tech Lead / Senior Software Engineer with 7+ years of experience building
+> scalable web applications and leading engineering teams. Focused on
+> backend architecture that has to be correct under real-world constraints —
+> idempotency, auditability, and regulatory correctness — not just feature
+> delivery.
+
+This site is a personal portfolio: career background, a career timeline,
+and case studies of production systems built and shipped.
+
+## Pages
+
+- [Home](/): hero, about, career timeline, tech stack, and contact links.
+- [Work](/work): full list of case studies.
+
+## Contact
+
+- LinkedIn: https://www.linkedin.com/in/muhammad-royhan-077830168
+- GitHub: https://github.com/muhroyhan
