@@ -1,6 +1,7 @@
 import { Hero } from "@/components/sections/hero";
 import { About } from "@/components/sections/about";
 import { CareerTimeline } from "@/components/sections/career-timeline";
+import { ArchitectureDecisions } from "@/components/sections/architecture-decisions";
 import { WorkPreview } from "@/components/sections/work-preview";
 import { TechStack } from "@/components/sections/tech-stack";
 import { ContactCta } from "@/components/sections/contact-cta";
@@ -15,6 +16,9 @@ export default function Home() {
       </ScrollReveal>
       <ScrollReveal>
         <CareerTimeline />
+      </ScrollReveal>
+      <ScrollReveal>
+        <ArchitectureDecisions />
       </ScrollReveal>
       <ScrollReveal>
         <WorkPreview />

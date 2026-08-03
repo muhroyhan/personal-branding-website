@@ -27,7 +27,7 @@ const jetbrainsMono = JetBrains_Mono({
 
 const SITE_TITLE = "Muhammad Royhan — Tech Lead & Senior Software Engineer";
 const SITE_DESCRIPTION =
-  "Portfolio of Muhammad Royhan, a Tech Lead / Senior Software Engineer focused on scalable backend architecture, payroll systems, and production-grade engineering.";
+  "Portfolio of Muhammad Royhan, a Tech Lead / Senior Software Engineer who architects backend systems for scale — combining systems thinking with a Stoic bias for what's controllable.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
