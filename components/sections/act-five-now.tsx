@@ -13,7 +13,7 @@ export function ActFiveNow() {
   return (
     <section
       id={ACT.id}
-      className="relative isolate overflow-hidden border-b border-border px-6 py-28"
+      className="relative isolate overflow-hidden border-b border-border px-6 py-16 sm:py-20 lg:py-28"
     >
       <LiveBlueprint id="act-now" />
 

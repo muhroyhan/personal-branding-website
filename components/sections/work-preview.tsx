@@ -41,9 +41,9 @@ export async function WorkPreview() {
   const items = allWork.slice(0, 2);
 
   return (
-    <section id="work" className="border-b border-border px-6 py-24">
+    <section id="work" className="border-b border-border px-6 py-16 sm:py-20 lg:py-24">
       <div className="mx-auto max-w-5xl">
-        <div className="mb-16 flex flex-col items-center gap-3 text-center">
+        <div className="mb-10 flex flex-col items-center gap-3 text-center sm:mb-16">
           <span className="font-mono text-caption tracking-wide text-accent uppercase">
             The evidence
           </span>

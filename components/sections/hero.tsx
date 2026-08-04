@@ -37,9 +37,21 @@ export function Hero() {
   return (
     <section
       id="hero"
-      className="relative isolate flex min-h-[85vh] flex-col items-center justify-center gap-8 overflow-hidden border-b border-border px-6 text-center"
+      className="relative isolate flex min-h-[75svh] flex-col items-center justify-center gap-6 overflow-hidden border-b border-border px-6 py-16 text-center sm:min-h-[85svh] sm:gap-8"
     >
       <LiveBlueprint id="hero" />
+
+      {/* Byline: the page <title> is deliberately the philosophical line, not
+          this name — so the name still needs to land somewhere a recruiter
+          sees it in the first second, before the headline does its work. */}
+      <motion.p
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.05 }}
+        className="font-mono text-caption tracking-wide text-muted-foreground uppercase"
+      >
+        Muhammad Royhan
+      </motion.p>
 
       <motion.h1
         variants={container}

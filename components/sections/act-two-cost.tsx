@@ -13,7 +13,7 @@ export function ActTwoCost() {
   return (
     <section
       id={ACT.id}
-      className="border-b border-border bg-card/40 px-6 py-28"
+      className="border-b border-border bg-card/40 px-6 py-16 sm:py-20 lg:py-28"
     >
       <div className="mx-auto max-w-xl">
         <ActHeading act={ACT} />

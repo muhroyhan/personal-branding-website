@@ -2,9 +2,9 @@ import { TECH_STACK_GROUPS } from "@/lib/constants";
 
 export function TechStack() {
   return (
-    <section id="stack" className="border-b border-border px-6 py-24">
+    <section id="stack" className="border-b border-border px-6 py-16 sm:py-20 lg:py-24">
       <div className="mx-auto max-w-3xl">
-        <div className="mb-16 flex flex-col items-center gap-3 text-center">
+        <div className="mb-10 flex flex-col items-center gap-3 text-center sm:mb-16">
           <span className="font-mono text-caption tracking-wide text-accent uppercase">
             The evidence
           </span>

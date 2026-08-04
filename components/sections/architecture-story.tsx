@@ -161,12 +161,12 @@ export function ArchitectureStory() {
     // container and stop the sticky diagram below from ever sticking.
     <section
       id={ACT.id}
-      className="relative isolate border-b border-border px-6 py-28"
+      className="relative isolate border-b border-border px-6 py-16 sm:py-20 lg:py-28"
     >
       <LiveBlueprint id="act-decision" />
 
       <div className="mx-auto max-w-5xl">
-        <div className="mx-auto mb-16 max-w-2xl">
+        <div className="mx-auto mb-10 max-w-2xl sm:mb-16">
           <ActHeading act={ACT} />
           <p className="text-body leading-relaxed text-muted-foreground">
             This is the one that changed how I work. Scroll through it — the
@@ -174,17 +174,28 @@ export function ArchitectureStory() {
           </p>
         </div>
 
-        <div className="grid gap-4 lg:grid-cols-2 lg:gap-16">
-          {/* Desktop offset centres the diagram against the copy, which sits
-              at the viewport middle; mobile keeps it pinned under the navbar. */}
-          <div className="sticky top-20 z-10 self-start bg-bg/90 py-4 backdrop-blur-sm lg:top-[calc(50vh-140px)] lg:bg-transparent lg:backdrop-blur-none">
-            <StoryDiagram step={step} />
-            <p className="mt-4 text-center font-mono text-caption tracking-wide text-accent uppercase">
+        {/*
+          Block on mobile, two-column grid from lg. This is load-bearing: as a
+          single-column *grid*, the sticky child below is trapped in a grid area
+          only as tall as itself and never pins. As a block, its containing
+          block becomes this whole wrapper — tall enough to pin against — so the
+          same scroll-driven diagram works on phones too.
+        */}
+        <div className="lg:grid lg:grid-cols-2 lg:gap-16">
+          {/* Mobile pins it under the navbar (h-16) as a full-bleed bar;
+              desktop parks it at the vertical middle beside the copy. */}
+          <div className="sticky top-16 z-10 -mx-6 border-b border-border bg-bg px-6 py-4 lg:top-[calc(50vh-140px)] lg:mx-0 lg:self-start lg:border-b-0 lg:bg-transparent lg:px-0 lg:py-0">
+            {/* Capped on mobile so the pinned graphic never eats more than
+                about a fifth of the viewport, leaving the copy room to read. */}
+            <div className="mx-auto max-w-72 lg:max-w-none">
+              <StoryDiagram step={step} />
+            </div>
+            <p className="mt-3 text-center font-mono text-caption tracking-wide text-accent uppercase lg:mt-4">
               {ARCHITECTURE_STORY[step].caption}
             </p>
             <div
               aria-hidden
-              className="mx-auto mt-4 flex w-fit items-center gap-1.5"
+              className="mx-auto mt-3 flex w-fit items-center gap-1.5 lg:mt-4"
             >
               {ARCHITECTURE_STORY.map((entry, index) => (
                 <span
@@ -197,11 +208,13 @@ export function ArchitectureStory() {
             </div>
           </div>
 
-          <ol ref={stepsRef}>
+          {/* svh, not vh: mobile browsers resize the viewport as their chrome
+              hides on scroll, which makes vh-based steps jump mid-animation. */}
+          <ol ref={stepsRef} className="pt-8 lg:pt-0">
             {ARCHITECTURE_STORY.map((entry, index) => (
               <li
                 key={entry.id}
-                className="flex min-h-[70vh] flex-col justify-center"
+                className="flex min-h-[42svh] flex-col justify-center lg:min-h-[70svh]"
               >
                 <p
                   className={`max-w-md text-body leading-relaxed transition-colors duration-300 motion-reduce:transition-none ${

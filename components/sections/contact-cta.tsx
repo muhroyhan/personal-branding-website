@@ -23,7 +23,7 @@ export function ContactCta() {
   return (
     <section
       id="contact"
-      className="flex flex-col items-center gap-8 border-b border-border px-6 py-24 text-center"
+      className="flex flex-col items-center gap-8 border-b border-border px-6 py-16 text-center sm:py-20 lg:py-24"
     >
       <h2 className="font-display text-h2 font-semibold text-fg">
         Want the next chapter written on your team?
