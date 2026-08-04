@@ -92,10 +92,22 @@
   }
   html {
     @apply font-sans;
+    scroll-behavior: smooth;
+  }
+  /* Every story/act section is a scroll-anchor target — this keeps the
+     sticky navbar (h-16) from covering the heading it just scrolled to. */
+  section[id] {
+    scroll-margin-top: 4.5rem;
   }
   :focus-visible {
     outline: 2px solid var(--accent);
     outline-offset: 2px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
   }
 }
 

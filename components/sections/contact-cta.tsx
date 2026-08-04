@@ -4,7 +4,7 @@ import { useState } from "react";
 import { CONTACT_LINKS } from "@/lib/constants";
 
 const LINK_CLASS =
-  "inline-flex items-center gap-2 rounded-md border border-border-strong px-5 py-2.5 font-mono text-caption tracking-wide text-fg uppercase transition-colors hover:border-accent hover:text-accent";
+  "inline-flex items-center gap-2 rounded-md border border-border-strong px-5 py-2.5 font-mono text-caption tracking-wide text-fg uppercase transition-all duration-150 hover:border-accent hover:text-accent active:scale-95";
 
 export function ContactCta() {
   const [copied, setCopied] = useState(false);
@@ -23,12 +23,11 @@ export function ContactCta() {
   return (
     <section
       id="contact"
-      className="flex flex-col items-center gap-8 border-b border-border px-6 py-24 text-center"
+      className="flex flex-col items-center gap-8 border-b border-border px-6 py-16 text-center sm:py-20 lg:py-24"
     >
-      <span className="font-mono text-caption tracking-wide text-muted-foreground/60 uppercase">
-        §06 — Contact
-      </span>
-      <h2 className="font-display text-h2 font-semibold text-fg">Let&apos;s talk</h2>
+      <h2 className="font-display text-h2 font-semibold text-fg">
+        Want the next chapter written on your team?
+      </h2>
       <p className="max-w-md text-body text-muted-foreground">
         Open to Tech Lead / Senior Software Engineer roles, remote-first. Reach out
         directly — no forms.

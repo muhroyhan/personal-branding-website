@@ -2,10 +2,10 @@
 
 import { Fragment } from "react";
 import { motion, type Variants } from "motion/react";
+import { Term } from "@/components/ui/term-tooltip";
+import { LiveBlueprint } from "@/components/motifs/live-blueprint";
 
 const HEADLINE = "Every system breaks. I design for the moment it does.";
-const SUBTITLE =
-  "Tech Lead & Senior Software Engineer — 7+ years architecting backend systems that scale with the team, not just the traffic. I lean on systems thinking and a Stoic bias for what's controllable to make that hold under pressure.";
 
 const HEADLINE_WORDS = HEADLINE.split(" ");
 
@@ -37,8 +37,22 @@ export function Hero() {
   return (
     <section
       id="hero"
-      className="flex min-h-[85vh] flex-col items-center justify-center gap-8 border-b border-border px-6 text-center"
+      className="relative isolate flex min-h-[75svh] flex-col items-center justify-center gap-6 overflow-hidden border-b border-border px-6 py-16 text-center sm:min-h-[85svh] sm:gap-8"
     >
+      <LiveBlueprint id="hero" />
+
+      {/* Byline: the page <title> is deliberately the philosophical line, not
+          this name — so the name still needs to land somewhere a recruiter
+          sees it in the first second, before the headline does its work. */}
+      <motion.p
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.05 }}
+        className="font-mono text-caption tracking-wide text-muted-foreground uppercase"
+      >
+        Muhammad Royhan
+      </motion.p>
+
       <motion.h1
         variants={container}
         initial="hidden"
@@ -70,8 +84,35 @@ export function Hero() {
         transition={{ duration: 0.6, delay: 0.75 }}
         className="max-w-xl text-body text-muted-foreground"
       >
-        {SUBTITLE}
+        Tech Lead &amp; Senior Software Engineer — 7+ years architecting backend
+        systems that scale with the team, not just the traffic. I lean on{" "}
+        <Term definition="Understanding a system by how its parts affect each other over time, not by inspecting any one part in isolation.">
+          systems thinking
+        </Term>{" "}
+        and a{" "}
+        <Term definition="The Stoic dichotomy of control: spend effort only on what you can actually influence, and design for the rest.">
+          Stoic bias for what&apos;s controllable
+        </Term>{" "}
+        to make that hold under pressure.
       </motion.p>
+
+      {/* Open loop: the question this line points at is restated and answered
+          in the final act, which is the whole reason to keep scrolling. */}
+      <motion.a
+        href="#act-beginnings"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.6, delay: 1 }}
+        className="group mt-4 flex flex-col items-center gap-2 font-mono text-caption tracking-wide text-muted-foreground uppercase transition-colors hover:text-accent"
+      >
+        Seven years, three promotions, one question I still can&apos;t fully answer
+        <span
+          aria-hidden
+          className="transition-transform duration-300 group-hover:translate-y-1 motion-reduce:transition-none"
+        >
+          ↓
+        </span>
+      </motion.a>
     </section>
   );
 }

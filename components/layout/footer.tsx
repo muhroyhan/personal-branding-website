@@ -2,8 +2,9 @@ import Link from "next/link";
 import { CONTACT_LINKS } from "@/lib/constants";
 
 const FOOTER_LINKS = [
-  { href: "/#about", label: "About" },
+  { href: "/#act-beginnings", label: "Story" },
   { href: "/#work", label: "Work" },
+  { href: "/writing", label: "Writing" },
   { href: "/#stack", label: "Stack" },
   { href: "/#contact", label: "Contact" },
 ];

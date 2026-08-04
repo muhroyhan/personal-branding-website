@@ -2,10 +2,12 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { Logomark } from "@/components/icons/logomark";
 
 const NAV_LINKS = [
-  { href: "/#about", label: "About" },
+  { href: "/#act-beginnings", label: "Story" },
   { href: "/#work", label: "Work" },
+  { href: "/writing", label: "Writing" },
   { href: "/#stack", label: "Stack" },
   { href: "/#contact", label: "Contact" },
 ];
@@ -41,8 +43,9 @@ export function Navbar() {
       <nav className="mx-auto flex h-16 max-w-5xl items-center justify-between px-6">
         <Link
           href="/"
-          className="font-display text-lg font-semibold tracking-tight text-fg"
+          className="flex items-center gap-2 font-display text-lg font-semibold tracking-tight text-fg"
         >
+          <Logomark className="h-5 w-5 text-muted-foreground" />
           royhan<span className="text-accent">.</span>
         </Link>
 
@@ -77,23 +80,28 @@ export function Navbar() {
 
       <div
         id="mobile-nav-menu"
-        className={`grid overflow-hidden border-t transition-[grid-template-rows] duration-300 ease-out motion-reduce:transition-none sm:hidden ${
+        className={`grid border-t transition-[grid-template-rows] duration-300 ease-out motion-reduce:transition-none sm:hidden ${
           menuOpen ? "grid-rows-[1fr] border-border" : "grid-rows-[0fr] border-transparent"
         }`}
       >
-        <ul className="flex min-h-0 flex-col gap-1 px-6 py-4 font-mono text-caption tracking-wide text-muted-foreground uppercase">
-          {NAV_LINKS.map((link) => (
-            <li key={link.href}>
-              <Link
-                href={link.href}
-                onClick={() => setMenuOpen(false)}
-                className="block py-2 transition-colors hover:text-fg"
-              >
-                {link.label}
-              </Link>
-            </li>
-          ))}
-        </ul>
+        {/* The collapsing element carries overflow-hidden and no padding of its
+            own — padding here would keep the closed menu ~32px tall and leave a
+            link visible under the header. Spacing lives on the inner list. */}
+        <div className="overflow-hidden">
+          <ul className="flex flex-col gap-1 px-6 py-4 font-mono text-caption tracking-wide text-muted-foreground uppercase">
+            {NAV_LINKS.map((link) => (
+              <li key={link.href}>
+                <Link
+                  href={link.href}
+                  onClick={() => setMenuOpen(false)}
+                  className="block py-2 transition-colors hover:text-fg"
+                >
+                  {link.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
       </div>
     </header>
   );
