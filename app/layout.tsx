@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Space_Grotesk, Inter, JetBrains_Mono } from "next/font/google";
+import { Cormorant_Garamond, Cinzel, EB_Garamond, Inter, JetBrains_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { MotionConfig } from "motion/react";
 import { Navbar } from "@/components/layout/navbar";
@@ -7,9 +7,32 @@ import { Footer } from "@/components/layout/footer";
 import { CONTACT_LINKS, SITE_URL } from "@/lib/constants";
 import "./globals.css";
 
-const spaceGrotesk = Space_Grotesk({
-  variable: "--font-space-grotesk",
+// Display: a Garamond cut carries the classical register at long headline
+// lengths, where a true inscriptional face would get hard to read.
+const cormorant = Cormorant_Garamond({
+  variable: "--font-cormorant",
   subsets: ["latin"],
+  weight: ["500", "600", "700"],
+  display: "swap",
+});
+
+// Reserved for Roman numerals and short carved labels only — Cinzel is drawn
+// from Trajan's column capitals and is deliberately not used for running text.
+const cinzel = Cinzel({
+  variable: "--font-cinzel",
+  subsets: ["latin"],
+  weight: ["500", "600"],
+  display: "swap",
+});
+
+// Cormorant Garamond has no Greek glyphs (next/font confirms: only latin,
+// latin-ext, cyrillic, cyrillic-ext, vietnamese). EB Garamond is the closest
+// stylistic relative that does carry a Greek subset, so it's loaded
+// separately and used nowhere except the λ mark.
+const ebGaramond = EB_Garamond({
+  variable: "--font-eb-garamond",
+  subsets: ["latin", "greek"],
+  weight: ["500", "600"],
   display: "swap",
 });
 
@@ -25,9 +48,9 @@ const jetbrainsMono = JetBrains_Mono({
   display: "swap",
 });
 
-const SITE_TITLE = "Muhammad Royhan — Tech Lead & Senior Software Engineer";
+const SITE_TITLE = "Muhammad Royhan — Senior Fullstack Engineer";
 const SITE_DESCRIPTION =
-  "Portfolio of Muhammad Royhan, a Tech Lead / Senior Software Engineer who architects backend systems for scale — combining systems thinking with a Stoic bias for what's controllable.";
+  "Portfolio of Muhammad Royhan, a Senior Fullstack Engineer with seven years and three promotions at one company — banking, marketplace, and payroll systems built to stay explainable after handover.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -58,7 +81,7 @@ const personJsonLd = {
   "@context": "https://schema.org",
   "@type": "Person",
   name: "Muhammad Royhan",
-  jobTitle: "Tech Lead / Senior Software Engineer",
+  jobTitle: "Senior Fullstack Engineer",
   url: SITE_URL,
   sameAs: [CONTACT_LINKS.linkedin, CONTACT_LINKS.github],
 };
@@ -71,7 +94,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${spaceGrotesk.variable} ${inter.variable} ${jetbrainsMono.variable} h-full antialiased`}
+      className={`${cormorant.variable} ${cinzel.variable} ${ebGaramond.variable} ${inter.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         <script

@@ -1,8 +1,8 @@
 import { Hero } from "@/components/sections/hero";
 import { ActOneBeginnings } from "@/components/sections/act-one-beginnings";
-import { ActTwoCost } from "@/components/sections/act-two-cost";
+import { ActTwoBanking } from "@/components/sections/act-two-banking";
+import { ActThreeInherited } from "@/components/sections/act-three-inherited";
 import { ArchitectureStory } from "@/components/sections/architecture-story";
-import { ActFourPeople } from "@/components/sections/act-four-people";
 import { ActFiveNow } from "@/components/sections/act-five-now";
 import { WorkPreview } from "@/components/sections/work-preview";
 import { TechStack } from "@/components/sections/tech-stack";
@@ -17,7 +17,7 @@ import { ScrollReveal } from "@/components/motion/scroll-reveal";
  * in its heading, so a recruiter scanning in twenty seconds still reads the
  * career progression without having to read the prose.
  *
- * Act III is deliberately not wrapped in ScrollReveal: it drives its own
+ * Act IV is deliberately not wrapped in ScrollReveal: it drives its own
  * scroll choreography, and a wrapper transform risks its sticky diagram.
  */
 export default function Home() {
@@ -30,12 +30,12 @@ export default function Home() {
         <ActOneBeginnings />
       </ScrollReveal>
       <ScrollReveal>
-        <ActTwoCost />
+        <ActTwoBanking />
+      </ScrollReveal>
+      <ScrollReveal>
+        <ActThreeInherited />
       </ScrollReveal>
       <ArchitectureStory />
-      <ScrollReveal>
-        <ActFourPeople />
-      </ScrollReveal>
       <ScrollReveal>
         <ActFiveNow />
       </ScrollReveal>

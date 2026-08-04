@@ -6,20 +6,24 @@
  * Design tokens — ai_dev_doc.md §4.
  * Dark-only palette (decision #4: no light/dark toggle), single amber-gold
  * accent used sparingly (CTA, active timeline node, progress lines).
+ *
+ * Hues run warm — ink and stone rather than the original blue-black — to sit
+ * with the classical register of the type. Every pairing below is measured,
+ * not eyeballed: body text clears 4.5:1 and --border-strong clears 3:1.
  */
 :root {
-  --bg: #0b0f14;
-  --fg: #e8ecef;
-  --card: #151b23;
-  --border: #2a323c;
-  /* Decorative dividers (--border) sit at ~1.5:1 against bg, which is fine
-     for non-text separators but fails WCAG 1.4.11 (3:1) as a UI component
-     boundary. --border-strong is for anything that needs to read as an
+  --bg: #0d0b0a;
+  --fg: #ece6da;
+  --card: #17140f;
+  --border: #332c22;
+  /* Decorative dividers (--border) sit far below 3:1, which is fine for
+     non-text separators but fails WCAG 1.4.11 as a UI component boundary.
+     --border-strong (3.92:1 on bg) is for anything that needs to read as an
      actual button/card edge (buttons, clickable cards, inputs). */
-  --border-strong: #637184;
+  --border-strong: #7d6d54;
   --accent: #d4a24e;
-  --accent-fg: #0b0f14;
-  --muted-fg: #8b96a3;
+  --accent-fg: #0d0b0a;
+  --muted-fg: #a3947d;
   --radius: 0.625rem;
 }
 
@@ -53,26 +57,34 @@
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) * 1.4);
 
-  /* typography — ai_dev_doc.md §4 */
-  --font-display: var(--font-space-grotesk);
+  /* typography — ai_dev_doc.md §4.
+     Display is a Garamond cut; --font-inscribed (Cinzel, from Trajan's column)
+     is reserved for Roman numerals and short carved labels. Mono stays as the
+     deliberate counterpoint: the engineer's voice against the classical one. */
+  --font-display: var(--font-cormorant);
+  --font-inscribed: var(--font-cinzel);
+  --font-lambda: var(--font-eb-garamond);
   --font-body: var(--font-inter);
   --font-sans: var(--font-inter);
   --font-mono: var(--font-jetbrains-mono);
 
-  /* type scale */
-  --text-h1: 3.5rem;
-  --text-h1--line-height: 1.1;
-  --text-h1--letter-spacing: -0.02em;
+  /* Type scale — sized up from the previous geometric sans: Garamond has a
+     smaller x-height, so it reads noticeably smaller at identical rem values.
+     Tracking is near-neutral too; the tight negative tracking that flattered
+     the old grotesk closes up a serif's counters. */
+  --text-h1: 4.25rem;
+  --text-h1--line-height: 1.05;
+  --text-h1--letter-spacing: -0.005em;
 
-  --text-h2: 2.5rem;
-  --text-h2--line-height: 1.15;
-  --text-h2--letter-spacing: -0.015em;
+  --text-h2: 3rem;
+  --text-h2--line-height: 1.1;
+  --text-h2--letter-spacing: 0em;
 
-  --text-h3: 1.75rem;
-  --text-h3--line-height: 1.25;
-  --text-h3--letter-spacing: -0.01em;
+  --text-h3: 2rem;
+  --text-h3--line-height: 1.2;
+  --text-h3--letter-spacing: 0em;
 
-  --text-h4: 1.25rem;
+  --text-h4: 1.375rem;
   --text-h4--line-height: 1.35;
 
   --text-body: 1rem;
