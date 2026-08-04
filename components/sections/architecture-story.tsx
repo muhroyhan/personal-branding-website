@@ -2,28 +2,40 @@
 
 import { useRef, useState } from "react";
 import { motion, useMotionValueEvent, useScroll } from "motion/react";
-import { ARCHITECTURE_STORY, STORY_ACTS } from "@/lib/constants";
+import { ARCHITECTURE_STORY, STORY_ACTS, SYLLOGISM } from "@/lib/constants";
 import { LiveBlueprint } from "@/components/motifs/live-blueprint";
 import { ActHeading } from "@/components/story/act-heading";
+import { LambdaMark } from "@/components/motifs/lambda-mark";
 
-const ACT = STORY_ACTS[2];
-
-const COLS = [16, 96, 176, 256];
-const PROJECT_W = 68;
-const SQUARE = 12;
-const CENTER_X = 170;
+const ACT = STORY_ACTS[3];
 
 const EASE = [0.22, 1, 0.36, 1] as const;
+
+// Payslip dots stand for people paid, not headcount to scale — 24 of them
+// read as "many" without pretending to draw 800.
+const DOT_COLS = 12;
+const DOT_X0 = 38;
+const DOT_GAP = 24;
+const DOT_ROW_Y = [24, 48];
+const DOT_TOTAL = 24;
+// Second row, mid-run: the one figure the story turns on.
+const FLAGGED_DOT = 15;
+
+const dotsShownAt = [4, 6, DOT_TOTAL, DOT_TOTAL, DOT_TOTAL];
 
 /**
  * Diagram state is derived entirely from `step` so the whole animation stays
  * a pure function of scroll position — no imperative timeline to keep in sync
  * with the copy in ARCHITECTURE_STORY.
+ *
+ * Deliberately monochrome plus the single accent: the palette has one accent
+ * by design, so the "wrong figure" beat is carried by a ring and a scale bump
+ * rather than by introducing an alarm colour the rest of the site never uses.
  */
 function StoryDiagram({ step }: { step: number }) {
-  const visibleProjects = step === 0 ? 1 : step === 1 ? 2 : 3;
-  const coreVisible = step >= 3;
-  const converged = step >= 3;
+  const shown = dotsShownAt[step] ?? DOT_TOTAL;
+  const flagged = step === 2;
+  const verified = step >= 3;
   const settled = step >= 4;
 
   return (
@@ -31,113 +43,114 @@ function StoryDiagram({ step }: { step: number }) {
       viewBox="0 0 340 150"
       className="w-full"
       role="img"
-      aria-label={`Architecture diagram, stage ${step + 1} of ${ARCHITECTURE_STORY.length}`}
+      aria-label={`Payroll system diagram, stage ${step + 1} of ${ARCHITECTURE_STORY.length}`}
     >
-      {/* Per-project duplicated concerns — the waste the story is about. */}
-      {COLS.slice(0, 3).map((col, projectIndex) =>
-        [0, 1, 2, 3].map((slot) => {
-          const baseX = col + 4 + slot * 16;
-          const shown = projectIndex < visibleProjects && !converged;
-          return (
-            <motion.rect
-              key={`${projectIndex}-${slot}`}
-              x={baseX}
-              y={76}
-              width={SQUARE}
-              height={SQUARE}
-              rx={2}
-              className="fill-muted-foreground"
-              initial={false}
-              animate={{
-                opacity: shown ? 0.55 : 0,
-                x: converged ? CENTER_X - (baseX + SQUARE / 2) : 0,
-              }}
-              transition={{ duration: 0.5, ease: EASE }}
-            />
-          );
-        }),
-      )}
+      {Array.from({ length: DOT_TOTAL }, (_, i) => {
+        const cx = DOT_X0 + (i % DOT_COLS) * DOT_GAP;
+        const cy = DOT_ROW_Y[Math.floor(i / DOT_COLS)];
+        const isFlagged = i === FLAGGED_DOT;
+        const visible = i < shown;
+        return (
+          <motion.circle
+            key={`dot-${i}`}
+            cx={cx}
+            cy={cy}
+            r={4}
+            className={
+              isFlagged && (flagged || verified)
+                ? "fill-accent"
+                : "fill-muted-foreground"
+            }
+            initial={false}
+            animate={{
+              opacity: visible ? (isFlagged && flagged ? 1 : 0.5) : 0,
+              scale: isFlagged && flagged ? 1.6 : 1,
+            }}
+            style={{ transformBox: "fill-box", transformOrigin: "center" }}
+            transition={{ duration: 0.45, ease: EASE, delay: visible ? i * 0.012 : 0 }}
+          />
+        );
+      })}
 
-      {/* Shared core — grows out from the centre as the squares collapse in. */}
+      {/* Ring marking the figure that cannot be explained yet. */}
+      <motion.circle
+        cx={DOT_X0 + (FLAGGED_DOT % DOT_COLS) * DOT_GAP}
+        cy={DOT_ROW_Y[1]}
+        r={10}
+        fill="none"
+        className="stroke-accent"
+        strokeWidth={1}
+        initial={false}
+        animate={{ opacity: flagged ? 0.9 : 0, scale: flagged ? 1 : 0.6 }}
+        style={{ transformBox: "fill-box", transformOrigin: "center" }}
+        transition={{ duration: 0.4, ease: EASE }}
+      />
+
+      <g>
+        <rect
+          x={90}
+          y={72}
+          width={160}
+          height={30}
+          rx={6}
+          className="fill-card stroke-border-strong"
+          strokeWidth={1.5}
+        />
+        <text
+          x={170}
+          y={91}
+          textAnchor="middle"
+          className="fill-muted-foreground font-mono"
+          fontSize={9}
+          letterSpacing={1.5}
+        >
+          PAYROLL RUN
+        </text>
+      </g>
+
+      {/* Connectors down to the audit layer, once it exists. */}
+      {[120, 170, 220].map((x) => (
+        <motion.line
+          key={`connector-${x}`}
+          x1={x}
+          y1={102}
+          x2={x}
+          y2={114}
+          className="stroke-accent"
+          strokeWidth={1}
+          initial={false}
+          animate={{ opacity: verified ? 0.7 : 0 }}
+          transition={{ duration: 0.4, ease: EASE }}
+        />
+      ))}
+
       <motion.g
         initial={false}
-        animate={{ opacity: coreVisible ? 1 : 0, scaleX: coreVisible ? 1 : 0.12 }}
+        animate={{ opacity: verified ? 1 : 0, scaleX: verified ? 1 : 0.12 }}
         transition={{ duration: 0.55, ease: EASE }}
         style={{ transformBox: "fill-box", transformOrigin: "center" }}
       >
         <rect
-          x={16}
-          y={76}
-          width={308}
-          height={36}
+          x={38}
+          y={114}
+          width={264}
+          height={28}
           rx={6}
           className="fill-card stroke-accent"
           strokeWidth={1.5}
+          strokeDasharray={settled ? undefined : "4 3"}
         />
         <text
-          x={CENTER_X}
-          y={98}
+          x={170}
+          y={132}
           textAnchor="middle"
           className="fill-accent font-mono"
           fontSize={9}
           letterSpacing={1.5}
         >
-          SHARED CORE
+          RE-DERIVABLE FROM INPUTS
         </text>
       </motion.g>
-
-      {/* Connectors only appear once projects sit on the foundation. */}
-      {COLS.map((col, index) => (
-        <motion.line
-          key={`connector-${index}`}
-          x1={col + PROJECT_W / 2}
-          y1={60}
-          x2={col + PROJECT_W / 2}
-          y2={76}
-          className="stroke-accent"
-          strokeWidth={1}
-          initial={false}
-          animate={{ opacity: settled && (index < 3 || settled) ? 0.7 : 0 }}
-          transition={{ duration: 0.4, ease: EASE }}
-        />
-      ))}
-
-      {COLS.map((col, index) => {
-        const isNewcomer = index === 3;
-        const shown = isNewcomer ? settled : index < visibleProjects;
-        return (
-          <motion.g
-            key={`project-${index}`}
-            initial={false}
-            animate={{ opacity: shown ? 1 : 0 }}
-            transition={{ duration: 0.45, ease: EASE }}
-          >
-            <rect
-              x={col}
-              y={16}
-              width={PROJECT_W}
-              height={44}
-              rx={6}
-              className={
-                isNewcomer
-                  ? "fill-card stroke-accent"
-                  : "fill-card stroke-border-strong"
-              }
-              strokeWidth={1.5}
-              strokeDasharray={isNewcomer ? "4 3" : undefined}
-            />
-            <text
-              x={col + PROJECT_W / 2}
-              y={43}
-              textAnchor="middle"
-              className={isNewcomer ? "fill-accent font-mono" : "fill-muted-foreground font-mono"}
-              fontSize={11}
-            >
-              {isNewcomer ? "NEW" : `P${index + 1}`}
-            </text>
-          </motion.g>
-        );
-      })}
     </svg>
   );
 }
@@ -163,14 +176,15 @@ export function ArchitectureStory() {
       id={ACT.id}
       className="relative isolate border-b border-border px-6 py-16 sm:py-20 lg:py-28"
     >
-      <LiveBlueprint id="act-decision" />
+      <LiveBlueprint id="act-payroll" />
 
       <div className="mx-auto max-w-5xl">
         <div className="mx-auto mb-10 max-w-2xl sm:mb-16">
           <ActHeading act={ACT} />
           <p className="text-body leading-relaxed text-muted-foreground">
-            This is the one that changed how I work. Scroll through it — the
-            problem earns the solution rather than being told it.
+            Two years, two systems, one engineer on each — traded between them
+            whenever one needed to move faster. Scroll through it — the problem
+            earns the solution rather than being told it.
           </p>
         </div>
 
@@ -226,6 +240,34 @@ export function ArchitectureStory() {
               </li>
             ))}
           </ol>
+        </div>
+
+        {/* Formal close: the five beats above are how the reasoning was
+            lived; this is the same argument checked in Aristotelian form —
+            proof that the story wasn't just a nicer way to state a feeling. */}
+        <div className="mx-auto mt-16 max-w-2xl rounded-lg border border-border-strong bg-card p-6 sm:mt-20 sm:p-8">
+          <div className="mb-5 flex items-center gap-2">
+            <LambdaMark className="text-h4" />
+            <p className="font-mono text-caption tracking-wide text-muted-foreground uppercase">
+              Stated formally
+            </p>
+          </div>
+          <dl className="flex flex-col gap-4">
+            {SYLLOGISM.map((line) => (
+              <div key={line.label}>
+                <dt className="font-mono text-caption tracking-wide text-accent uppercase">
+                  {line.label}
+                </dt>
+                <dd
+                  className={`mt-1 text-body leading-relaxed ${
+                    line.label === "Conclusion" ? "font-medium text-fg" : "text-muted-foreground"
+                  }`}
+                >
+                  {line.text}
+                </dd>
+              </div>
+            ))}
+          </dl>
         </div>
       </div>
     </section>

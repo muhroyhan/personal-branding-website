@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { getAllWork } from "@/lib/mdx";
 import type { WorkListItem } from "@/types/work";
+import { CarvedText } from "@/components/motion/carved-text";
+import { MeanderRule } from "@/components/motifs/meander-rule";
 
 export function WorkCard({ item }: { item: WorkListItem }) {
   return (
@@ -47,7 +49,12 @@ export async function WorkPreview() {
           <span className="font-mono text-caption tracking-wide text-accent uppercase">
             The evidence
           </span>
-          <h2 className="font-display text-h2 font-semibold text-fg">Selected Work</h2>
+          <CarvedText
+            as="h2"
+            text="Selected Work"
+            className="font-display text-h2 font-semibold text-fg"
+          />
+          <MeanderRule className="max-w-32 text-border-strong" />
           <p className="max-w-xl text-body text-muted-foreground">
             The systems behind the story, written up in full.
           </p>

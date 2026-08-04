@@ -1,5 +1,6 @@
 export type StoryAct = {
   id: string;
+  numeral: string;
   year: string;
   role: string;
   title: string;
@@ -13,59 +14,68 @@ export type StoryAct = {
 export const STORY_ACTS: StoryAct[] = [
   {
     id: "act-beginnings",
+    numeral: "I",
     year: "2019",
     role: "Junior Software Engineer",
-    title: "The one who wasn't ready",
+    title: "The one who never meant to be here",
   },
   {
-    id: "act-cost",
-    year: "2021",
-    role: "Software Engineer → Senior",
-    title: "The cost nobody bills you for",
-  },
-  {
-    id: "act-decision",
+    id: "act-banking",
+    numeral: "II",
     year: "2022",
     role: "Senior Software Engineer",
-    title: "The decision",
+    title: "Numbers that belong to someone else",
   },
   {
-    id: "act-people",
+    id: "act-inherited",
+    numeral: "III",
     year: "2023",
-    role: "Tech Lead",
-    title: "When the variables are people",
+    role: "Team Lead — Legacy Maintenance",
+    title: "Promoted into other people's decisions",
+  },
+  {
+    id: "act-payroll",
+    numeral: "IV",
+    year: "2024",
+    role: "Team Lead",
+    title: "The one that had to be right",
   },
   {
     id: "act-now",
+    numeral: "V",
     year: "Now",
-    role: "Tech Lead",
+    role: "Team Lead",
     title: "Where that leaves me",
   },
 ];
 
+/*
+ * Copy budget: no paragraph over ~40 words, no act over ~110, roughly 430
+ * across the homepage. Readers skim; every sentence here has to earn its line.
+ */
+
 export const ACT_ONE_PARAGRAPHS = [
-  "Moving Bytes Digital hired me as a junior and then, fairly quickly, stopped treating me like one. The company's first Flutter app shipped with my name on it. Production React.js and Express.js work followed — mostly problems nobody had fully solved yet, handed to whoever was free. That was usually me.",
-  "I was underprepared for most of it, and that turned out to be the useful part. Being out of my depth forced a question I couldn't answer with better syntax: how do you make good decisions when you don't control most of the variables?",
-  "At the time I assumed it was a temporary problem — something more experience would eventually dissolve. It didn't.",
+  "I avoided software on purpose. The field looked overcrowded, and I had no appetite for competing against people who had wanted it far longer than I had.",
+  "Moving Bytes Digital hired me anyway. My first work was an ERP build and a rental marketplace someone else had started — inherited code, inherited decisions, a project handed over mid-run.",
+  "By 2021 I was maintaining that marketplace and building its mobile app in a team. The competition never arrived; the obligation did — and with it a question. How do you decide well without controlling the variables?",
 ];
 
 export const ACT_TWO_PARAGRAPHS = [
-  "A second client project arrived. Then a third. The same four problems every time — auth, job queues, error handling, the shape of a survivable migration — solved again from scratch, slightly differently, by whoever reached them first.",
-  "I was promoted twice across those two years. It would be a better story if those promotions had come from solving that. They didn't. They came from shipping, and shipping fast was quietly making everything after it slower.",
-  "By the third codebase the arithmetic was hard to ignore: three versions of the same decision, three places for the same bug to live. Fixing something once no longer meant it was fixed. I had been optimising for output while the structure underneath got more expensive to change every month — and I was being rewarded for it the entire time.",
-  "That's the part I'd want you to read carefully. Not that I found the answer, but that it took me two years and three codebases to admit there was a question.",
+  "In 2022 I took an operational system for a rural credit bank — first commit through to handover. My first project owned end to end, in the least forgiving domain I had touched.",
+  "Banking software has no cosmetic bugs. A misplaced figure is somebody's balance, and the people it belongs to find out before you do.",
+  "The handover taught me more than the build did. Code you hand to someone else has to explain itself without you in the room — a constraint I have designed for ever since.",
 ];
 
-export const ACT_FOUR_PARAGRAPHS = [
-  "In 2023 I became Tech Lead: two client projects, two engineers, scoping through to production. The first thing leading changes is the variable count. Code does what you tell it. People, deadlines, and shifting priorities do not.",
-  "The clearest test was an enterprise payroll system running for more than 800 employees. A wrong number there isn't a bug report — it's somebody's paycheck. So I built for traceability and recovery before raw speed. Every write path costs more design work upfront; in exchange, every number in the system can be explained instead of trusted.",
-  "Scaling the team needed the same instinct. I split ownership by domain module rather than by ticket. It demanded tighter documentation than anyone enjoys writing, and it let two engineers move in parallel without blocking on each other — or on me.",
-  "Contributing to an international project spanning teams across countries and timezones only sharpened the point. The further a system spreads, the less of it you control directly, and the more the structure has to hold on its own.",
+export const ACT_THREE_PARAGRAPHS = [
+  "The promotion to Team Lead came in 2023. Not the lead who builds new systems, or the one running the flagship manufacturing project — the one who keeps everything already shipped still running.",
+  "This is the part nobody puts in a portfolio. Most of that year was spent inside decisions I had not made, in code I could not rewrite, against timelines I did not set.",
+  "It taught the lesson this whole page rests on: you rarely control what you inherit. You only control whether it is more explainable when you hand it on.",
 ];
 
-export const ACT_FIVE_PARAGRAPHS = [
-  "I still don't have a clean answer, and I've stopped expecting one. What I have is a method that works: separate the variables you can actually design — boundaries, ownership, observability, what happens on failure — from the ones you can only respond to. Spend your effort almost entirely on the first set. Build so the second set can't take you down.",
-  "That isn't a philosophy I read somewhere and applied. It's what seven years, three promotions, and one expensive detour through three duplicated codebases taught me — and it's what I'd bring to your team well before any particular framework.",
+export const ACT_NOW_PARAGRAPHS = [
+  "I still have no clean answer to the question from 2019, and I have stopped expecting one. What I have is a method: separate what you can design — boundaries, ownership, traceability — from what you can only answer.",
+  "I never chose this field for love of it. I stayed because people depended on the work being right, and that turned out to be the more durable reason.",
+  "Between March and June 2025, the same discipline carried into a project spanning more than one country.",
 ];
 
 export type ArchitectureStoryStep = {
@@ -75,35 +85,62 @@ export type ArchitectureStoryStep = {
 };
 
 /**
- * ADR-01 ("Reusable patterns over one-off builds") retold as a five-beat
- * scroll narrative — the diagram in `architecture-story.tsx` keys its state
- * off this array's index, so reordering or resizing it changes the animation.
+ * The payroll arc (2024 internal → 2025 client at 800+ → shipped June 2026)
+ * as a five-beat scroll narrative. The diagram in `architecture-story.tsx`
+ * keys its state off this array's index, so reordering or resizing it changes
+ * the animation.
  */
 export const ARCHITECTURE_STORY: ArchitectureStoryStep[] = [
   {
-    id: "one-project",
-    caption: "One project",
-    body: "2019. One client, one codebase. Auth, job queues, error handling — all written from scratch, and all of it perfectly fine. At this size, nothing about it looks like a problem yet.",
+    id: "internal",
+    caption: "One company",
+    body: "2024. A payroll system for our own company — small, internal, forgiving. If it broke, I heard about it down the hall.",
   },
   {
-    id: "second-project",
-    caption: "A second project",
-    body: "Then a second project landed. Same four problems, solved again — slightly differently, by whoever reached them first. Still defensible. Still just a little duplication.",
+    id: "quiet-year",
+    caption: "A year of quiet",
+    body: "It ran correctly for a year, and became the foundation the client build started from — not a rewrite, an inheritance.",
   },
   {
-    id: "third-project",
-    caption: "The cost shows up",
-    body: "By the third, the cost stopped being theoretical. Three codebases, three versions of the same decisions, three separate places for the same bug to live. Fixing something once no longer meant it was fixed.",
+    id: "client-scale",
+    caption: "800+ people",
+    body: "2025. The same problem for a client, at more than 800 employees. A wrong figure was no longer a bug report. It was a wage that did not arrive.",
   },
   {
-    id: "extract-core",
-    caption: "Extracting the core",
-    body: "So I stopped optimizing individual projects and started extracting what they already shared — auth, queues, error handling, the boring parts nobody wants to rewrite and everybody rewrites anyway.",
+    id: "re-derivable",
+    caption: "Every figure re-derivable",
+    body: "So I built for re-derivation before speed: every number traceable to its inputs, every run reproducible from scratch.",
   },
   {
-    id: "shared-foundation",
-    caption: "A foundation to start from",
-    body: "Now a new project doesn't start at zero. It starts on a foundation three projects have already stress-tested. The first one cost me time I couldn't bill. Every one since has been faster — which is the whole trade, stated honestly.",
+    id: "shipped",
+    caption: "Shipped, and still running",
+    body: "Delivered June 2026. It has been running since, and I still maintain it — which is its own kind of verdict.",
+  },
+];
+
+export type SyllogismLine = {
+  label: string;
+  text: string;
+};
+
+/**
+ * The Anatomy scrollytelling (ARCHITECTURE_STORY) makes this argument through
+ * five narrative beats; this is the same reasoning stated in Aristotelian
+ * form — premise, premise, conclusion — as a formal check on the story rather
+ * than a retelling of it.
+ */
+export const SYLLOGISM: SyllogismLine[] = [
+  {
+    label: "Premise I",
+    text: "A payroll error is not a defect report. It is a wage that did not arrive.",
+  },
+  {
+    label: "Premise II",
+    text: "A figure that cannot be re-derived from its inputs can only be trusted, never verified.",
+  },
+  {
+    label: "Conclusion",
+    text: "Build so every figure can be re-derived. Trust is not a control.",
   },
 ];
 
@@ -116,10 +153,10 @@ export type DichotomyItem = {
 
 export const DICHOTOMY_ITEMS: DichotomyItem[] = [
   {
-    id: "traffic-spikes",
-    label: "Traffic spikes on launch day",
+    id: "inherited-code",
+    label: "The codebase you inherit",
     category: "uncontrollable",
-    note: "You can't control demand. You can control whether the system degrades gracefully or falls over.",
+    note: "You don't get to pick the decisions already made. You only pick whether the next person inherits something clearer.",
   },
   {
     id: "client-deadline",

@@ -1,4 +1,6 @@
 import { TECH_STACK_GROUPS } from "@/lib/constants";
+import { CarvedText } from "@/components/motion/carved-text";
+import { MeanderRule } from "@/components/motifs/meander-rule";
 
 export function TechStack() {
   return (
@@ -8,7 +10,12 @@ export function TechStack() {
           <span className="font-mono text-caption tracking-wide text-accent uppercase">
             The evidence
           </span>
-          <h2 className="font-display text-h2 font-semibold text-fg">Tech Stack</h2>
+          <CarvedText
+            as="h2"
+            text="Tech Stack"
+            className="font-display text-h2 font-semibold text-fg"
+          />
+          <MeanderRule className="max-w-32 text-border-strong" />
           <p className="max-w-xl text-body text-muted-foreground">
             The tools I reach for — chosen for what stays boring under pressure.
           </p>

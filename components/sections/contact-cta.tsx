@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { CONTACT_LINKS } from "@/lib/constants";
+import { CarvedText } from "@/components/motion/carved-text";
+import { MeanderRule } from "@/components/motifs/meander-rule";
 
 const LINK_CLASS =
   "inline-flex items-center gap-2 rounded-md border border-border-strong px-5 py-2.5 font-mono text-caption tracking-wide text-fg uppercase transition-all duration-150 hover:border-accent hover:text-accent active:scale-95";
@@ -25,12 +27,15 @@ export function ContactCta() {
       id="contact"
       className="flex flex-col items-center gap-8 border-b border-border px-6 py-16 text-center sm:py-20 lg:py-24"
     >
-      <h2 className="font-display text-h2 font-semibold text-fg">
-        Want the next chapter written on your team?
-      </h2>
+      <CarvedText
+        as="h2"
+        text="Want the next chapter written on your team?"
+        className="max-w-2xl font-display text-h2 font-semibold text-fg"
+      />
+      <MeanderRule className="max-w-32 text-border-strong" />
       <p className="max-w-md text-body text-muted-foreground">
-        Open to Tech Lead / Senior Software Engineer roles, remote-first. Reach out
-        directly — no forms.
+        Open to Senior Fullstack Engineer roles, remote-first. Reach out directly
+        — no forms.
       </p>
 
       <div className="flex flex-wrap items-center justify-center gap-3">

@@ -4,8 +4,9 @@ import { Fragment } from "react";
 import { motion, type Variants } from "motion/react";
 import { Term } from "@/components/ui/term-tooltip";
 import { LiveBlueprint } from "@/components/motifs/live-blueprint";
+import { MeanderRule } from "@/components/motifs/meander-rule";
 
-const HEADLINE = "Every system breaks. I design for the moment it does.";
+const HEADLINE = "Competition kept me out. Obligation kept me in.";
 
 const HEADLINE_WORDS = HEADLINE.split(" ");
 
@@ -19,12 +20,15 @@ const container: Variants = {
   },
 };
 
+// Matches CarvedText's language — lettering rising out of the surface with
+// the blur resolving, rather than sliding in from the side.
 const word: Variants = {
-  hidden: { opacity: 0, y: 16 },
+  hidden: { opacity: 0, y: "0.35em", filter: "blur(4px)" },
   show: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] },
+    filter: "blur(0px)",
+    transition: { duration: 0.7, ease: [0.22, 1, 0.36, 1] },
   },
 };
 
@@ -69,14 +73,14 @@ export function Hero() {
         ))}
       </motion.h1>
 
-      <motion.span
-        aria-hidden
-        initial={{ scaleX: 0, opacity: 1 }}
-        animate={{ scaleX: 1, opacity: 1 }}
-        transition={{ duration: 0.8, delay: 0.65, ease: [0.65, 0, 0.35, 1] }}
-        style={{ transformOrigin: "left" }}
-        className="h-px w-24 bg-accent"
-      />
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.6, delay: 0.65 }}
+        className="w-40 text-accent"
+      >
+        <MeanderRule />
+      </motion.div>
 
       <motion.p
         initial={{ opacity: 0, y: 12 }}
@@ -84,8 +88,8 @@ export function Hero() {
         transition={{ duration: 0.6, delay: 0.75 }}
         className="max-w-xl text-body text-muted-foreground"
       >
-        Tech Lead &amp; Senior Software Engineer — 7+ years architecting backend
-        systems that scale with the team, not just the traffic. I lean on{" "}
+        Senior Fullstack Engineer — backend and frontend — seven years and three
+        promotions at one company. I lean on{" "}
         <Term definition="Understanding a system by how its parts affect each other over time, not by inspecting any one part in isolation.">
           systems thinking
         </Term>{" "}
@@ -93,7 +97,7 @@ export function Hero() {
         <Term definition="The Stoic dichotomy of control: spend effort only on what you can actually influence, and design for the rest.">
           Stoic bias for what&apos;s controllable
         </Term>{" "}
-        to make that hold under pressure.
+        to build software that holds up after I hand it over.
       </motion.p>
 
       {/* Open loop: the question this line points at is restated and answered
