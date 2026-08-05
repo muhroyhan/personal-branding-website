@@ -2,33 +2,29 @@
 title: "Sistem Payroll 800+ Karyawan"
 slug: "payroll-system"
 summary: "Engine payroll dengan PPh 21 TER, BPJS, dan PP 58/2023. Payroll run idempoten, audit trail 10 entitas, setiap angka bisa dilacak sampai ke sumbernya."
-tech: ["NestJS", "TypeScript", "PostgreSQL", "BullMQ", "React.js", "Docker"]
+tech: ["NestJS", "TypeScript", "MySQL", "AWS SQS", "React.js", "Docker"]
 date: "2026-06-01"
 period: "2024 — 2026 · Team Lead"
 featured: true
 ---
-
-## Ringkasan
 
 | | |
 |---|---|
 | **Peran** | Team Lead — arsitektur, implementasi, scoping ke klien |
 | **Skala** | 800+ karyawan, rilis produksi Juni 2026 |
 | **Domain** | PPh 21 metode TER, BPJS, PP 58/2023 |
-| **Stack** | NestJS, PostgreSQL, BullMQ, React, Docker |
+| **Stack** | NestJS, MySQL, AWS SQS (LocalStack di lokal), React, Docker |
 | **Tim** | 2 proyek, 2 engineer |
 
 ## Masalahnya
 
 Di payroll tidak ada bug yang sifatnya cuma tampilan. Angka yang salah bukan
-laporan bug. Itu gaji yang tidak sampai, di tanggal orang harus bayar cicilan,
+laporan bug — itu gaji yang tidak sampai, di tanggal orang harus bayar cicilan,
 ke orang yang tidak punya cara memeriksa hitungan saya.
 
-Jadi pertanyaan desainnya bukan "seberapa cepat sistem ini jalan". Melainkan:
+Pertanyaan desainnya bukan "seberapa cepat sistem ini jalan", melainkan:
 **bisakah setiap angka di slip gaji dijelaskan enam bulan kemudian, ke orang
-yang tidak punya alasan untuk percaya pada saya?**
-
-Dari situ lahir tiga syarat:
+yang tidak punya alasan untuk percaya pada saya?** Dari situ lahir tiga syarat:
 
 1. **Bisa dilacak.** Setiap angka bisa ditelusuri sampai ke data sumbernya.
 2. **Idempoten.** Payroll dijalankan dua kali tidak boleh membayar dua kali.
@@ -36,216 +32,185 @@ Dari situ lahir tiga syarat:
 
 ## Perjalanannya
 
-2024. Sistem payroll untuk perusahaan sendiri. Internal, skala kecil, risikonya
-masih terkendali. Jalan benar selama setahun penuh.
+2024, sistem payroll untuk perusahaan sendiri — internal, skala kecil. Jalan
+benar selama setahun penuh. 2025, klien butuh masalah yang sama diselesaikan
+untuk 800+ karyawan. Setahun tanpa insiden itu yang jadi alasan melanjutkan
+sistem yang sudah ada, bukan menulis ulang dari nol. Yang rilis Juni 2026
+adalah kelanjutannya, bukan tulisan ulang.
 
-2025. Klien butuh masalah yang sama diselesaikan untuk 800+ karyawan. Setahun
-tanpa insiden itu yang jadi alasan untuk melanjutkan sistem yang sudah ada,
-bukan menulis ulang dari nol. Yang rilis ke klien Juni 2026 adalah kelanjutan
-sistem internal tadi.
-
-Lompatan skalanya yang mengubah cara kerja teknisnya. Payroll 40 orang masih
-bisa dicek manual. 800 orang tidak bisa. Jadi sistemnya sendiri yang harus bisa
+Lompatan skalanya yang mengubah cara kerja teknisnya: payroll 40 orang masih
+bisa dicek manual, 800 orang tidak — jadi sistemnya sendiri yang harus bisa
 mempertanggungjawabkan hasilnya.
 
 ## Keputusan arsitektur
 
 ### Scope resolution: satu aturan, lima tingkat
 
-Aturan kompensasi di perusahaan nyata tidak pernah datar. Tunjangan makan bisa
-berlaku untuk semua orang, lalu di-*override* untuk satu divisi, di-*override*
-lagi untuk satu posisi, dan terakhir di-*override* untuk satu karyawan yang
-memang menegosiasikannya.
+Aturan kompensasi tidak pernah datar. Tunjangan makan bisa berlaku untuk semua
+orang, di-*override* untuk satu divisi, di-*override* lagi untuk satu posisi,
+dan terakhir untuk satu karyawan yang menegosiasikannya.
 
-Kalau tiap jenis aturan dibuatkan tabel dan logikanya sendiri, logika override
-harus ditulis ulang setiap ada komponen gaji baru. Saya bangun satu **scope
-resolution engine** dengan urutan prioritas yang tetap:
+Kalau tiap jenis aturan punya tabel dan logikanya sendiri, logika override
+ditulis ulang tiap ada komponen baru. Satu **scope resolution engine**,
+prioritas tetap:
 
 ```
 employee > division > department > position > employment type
 ```
 
-Semua komponen kompensasi lewat urutan yang sama. Menambah komponen baru jadi
-perubahan data, bukan perubahan kode. Yang lebih penting: urutan resolusinya
-cuma satu hal yang perlu dijelaskan ke orang baru, bukan satu penjelasan untuk
-tiap aturan.
+Semua komponen kompensasi lewat urutan yang sama. Menambah komponen jadi
+perubahan data, bukan kode — dan urutan resolusinya cuma satu hal yang perlu
+dijelaskan, bukan satu penjelasan per aturan.
 
-**Konsekuensinya:** resolusi butuh rantai lookup, bukan sekali baca. Overhead
-itu nyata, dibayar sekali per karyawan per payroll run. Saya ambil karena
-alternatifnya adalah logika override yang tersebar di banyak file. Itu jenis
-bug yang tidak akan ketemu walau kita baca file mana pun satu per satu.
+**Konsekuensinya:** resolusi butuh rantai lookup, bukan sekali baca, dibayar
+sekali per karyawan per run. Saya ambil karena alternatifnya adalah logika
+override tersebar di banyak file — jenis bug yang tidak ketemu walau file
+mana pun dibaca satu per satu.
 
 ### Kehadiran itu diturunkan, bukan diinput
 
-Bagian paling berantakan di sistem ini justru yang paling tidak diduga:
-menentukan apakah seseorang hari ini masuk kerja.
+Bagian paling berantakan justru yang paling tidak diduga: menentukan apakah
+seseorang hari ini masuk kerja. Tidak ada yang mengetikkan itu — datanya
+diturunkan dari absen mesin fingerprint, dan data mentahnya sendiri tidak
+menjawab pertanyaannya.
 
-Tidak ada yang mengetikkan itu. Datanya diturunkan dari hasil bulk upload mesin
-fingerprint, dan data mentahnya sendiri tidak menjawab pertanyaannya. Tiap
-shift punya timetable, dan timetable menentukan jam kerja yang diharapkan:
-delapan jam, tujuh jam kalau tidak ada absen istirahat, lima setengah jam untuk
-shift pendek. Kurang dari itu tidak selalu berarti hal yang sama:
+| Jam vs. timetable shift | Dengan surat izin | Tanpa surat izin |
+|---|---|---|
+| Kurang | Gaji prorata | Tidak dapat gaji |
+| Terpenuhi / lebih | Gaji penuh | Gaji penuh |
 
-- Kurang jam **dengan** surat izin — gaji prorata.
-- Kurang jam **tanpa** surat izin — hari itu tidak dapat gaji.
-- Jam terpenuhi atau lebih — gaji penuh.
+Lalu kalendernya ikut campur:
 
-Lalu kalendernya ikut campur. Hari libur nasional dihitung hari kerja untuk
-karyawan bulanan, tidak untuk karyawan harian. Cuti bersama membayar penuh
-karyawan harian selama jatah cuti tahunannya masih ada, dan tidak membayar
-kalau jatahnya habis. Karyawan yang absen di hari libur dengan timetable lembur
-dapat upah lembur dan tidak dapat gaji harian, karena hari itu memang bukan
-hari kerjanya. Dan karyawan di empat level jabatan teratas dikecualikan dari
-semuanya. Gajinya sama sekali tidak bergantung pada fingerprint.
+- **Hari libur nasional** dihitung hari kerja untuk karyawan bulanan, tidak
+  untuk karyawan harian.
+- **Cuti bersama** membayar penuh karyawan harian selama jatah cuti tahunannya
+  masih ada — tidak membayar kalau habis.
+- Absen di hari libur dengan **timetable lembur** dapat upah lembur, bukan
+  gaji harian — hari itu memang bukan hari kerjanya.
+- **Empat level jabatan teratas dikecualikan dari semuanya**; gajinya sama
+  sekali tidak bergantung pada fingerprint.
 
-Itu bukan rumus. Itu matriks jenis karyawan × sisa cuti × timetable × jenis
+Itu bukan rumus — itu matriks jenis karyawan × sisa cuti × timetable × jenis
 hari libur, dan di situlah sistem payroll diam-diam menghilangkan uang orang.
-
-Saya tidak menyederhanakannya, karena sebetulnya ini bukan rumit, ini *detail*.
-Dua masalah yang berbeda. Menyederhanakan detail artinya memutuskan bahwa kasus
-pinggiran milik sebagian orang boleh diabaikan. Yang saya lakukan justru
-sebaliknya: tiap cabang dibuat eksplisit dan punya nama, supaya hari yang
-dipersoalkan bisa ditelusuri balik ke aturan spesifik yang menghasilkannya.
-Bukan ke kondisi bersarang yang tidak bisa dibacakan siapa pun.
+Saya tidak menyederhanakannya karena ini bukan rumit, ini *detail* — dua
+masalah berbeda, dan menyederhanakan detail berarti memutuskan kasus pinggiran
+siapa yang boleh diabaikan. Tiap cabang dibuat eksplisit dan bernama, supaya
+hari yang dipersoalkan bisa ditelusuri balik ke aturan spesifiknya.
 
 ### Idempotency, karena retry itu pasti terjadi
 
-Satu payroll run menyentuh ratusan record dan makan waktu beberapa menit.
-Beberapa menit itu cukup lama untuk koneksi putus, worker restart, atau
-operator keburu klik dua kali. Semuanya berakhir sama: operasinya diulang.
+Satu run menyentuh ratusan record dalam beberapa menit — cukup lama untuk
+koneksi putus, worker restart, atau operator klik dua kali. Semuanya berakhir
+sama: operasinya diulang.
 
-- Payroll run dan kasbon dibuat **idempoten**. Request yang berulang
-  menghasilkan hasil yang sama, bukan pembayaran kedua.
-- Run dikendalikan **state machine**, bukan flag boolean `is_processed`. Run
-  yang mati di tengah punya status yang jelas namanya dan bisa dilanjutkan.
-  Bukan status abu-abu yang harus ditebak engineer jam 2 pagi.
-- Pemrosesan dipecah lewat antrean **BullMQ**. Di angka 800+ karyawan, satu
-  transaksi sinkron itu risiko timeout sekaligus kegagalan yang menyeret
-  semuanya. Dengan dipecah, progresnya tahan gagal dan kegagalannya lokal.
+- **Payroll run dan kasbon idempoten** — request berulang menghasilkan hasil
+  yang sama, bukan pembayaran kedua.
+- Run dikendalikan **state machine**, bukan flag boolean. Run yang mati di
+  tengah punya status yang jelas namanya dan bisa dilanjutkan — bukan status
+  abu-abu yang harus ditebak engineer jam 2 pagi.
+- Pemrosesan dipecah lewat antrean **AWS SQS** (di lokal dicerminkan lewat
+  **LocalStack**, jadi kontrak antreannya identik di dev maupun produksi). Di
+  800+ karyawan, satu transaksi sinkron itu risiko timeout sekaligus kegagalan
+  yang menyeret semuanya.
+- Kegagalan per karyawan, bukan per run. Payslip yang gagal di-retry otomatis;
+  run ulang hanya memproses **karyawan yang masih gagal**. Tanpa itu, memulihkan
+  tiga payslip yang salah berarti memproses ulang 800 orang.
 
-Kegagalan ditangani per karyawan, bukan per run. Payslip yang gagal di-retry
-otomatis. Kalau tetap gagal, run-nya ditandai gagal dan kegagalannya bisa
-ditunjuk ke karyawan tertentu, bukan ke "payroll-nya". Run ulang hanya
-memproses **karyawan yang gagal saja**, yang sudah jadi tidak disentuh. Tanpa
-jaminan itu, memulihkan kegagalan sebagian berarti memproses ulang 800 orang
-demi memperbaiki tiga. Operasi yang tidak ada orang mau menyetujuinya jam 2
-pagi, dan akhirnya selalu dilakukan dengan buruk.
-
-Saya juga menemukan dan memperbaiki satu *race condition*. Dua request kasbon
-yang datang bersamaan bisa sama-sama lolos pengecekan saldo sebelum salah
-satunya commit. Bug seperti ini tidak pernah muncul waktu testing, dan selalu
-muncul di produksi.
+Saya juga menemukan dan memperbaiki satu *race condition*: dua request kasbon
+bersamaan bisa sama-sama lolos pengecekan saldo sebelum salah satunya commit —
+bug yang tidak pernah muncul waktu testing dan selalu muncul di produksi.
 
 ### Data hulu yang bukan milik kita
 
-Insentif dihitung dari hasil produksi yang datanya ada di ERP terpisah:
-produktivitas mesin, tonase kirim, persentase waste, ketepatan pengiriman. Data
-itu bukan milik saya, tidak datang saat diminta, dan tidak selalu benar.
+Insentif dihitung dari hasil produksi di ERP terpisah: produktivitas mesin,
+tonase, waste, ketepatan pengiriman. Data itu bukan milik saya, tidak datang
+saat diminta, dan tidak selalu benar.
 
-Jadi data ditarik terjadwal ke tabel staging sebelum periode payroll, bukan
-diambil saat payroll run berjalan. Tiga akibatnya, dan ketiganya memang
-tujuannya:
+Jadi ditarik terjadwal ke tabel staging sebelum periode payroll, bukan saat run
+berjalan. Payroll run tidak pernah menggantung menunggu pihak ketiga hidup;
+data yang salah kelihatan **sebelum** jadi slip gaji dan bisa ditarik ulang
+tanpa menyentuh payroll; kaitan antara angka dan record asalnya tetap ada,
+jadi masih bisa dijelaskan nanti. Tarifnya sendiri pemetaan, bukan perhitungan
+— hasil produksi dipetakan ke tabel tarif berjenjang, jadi negosiasi tarif
+baru itu perubahan data, bukan tiket ke saya.
 
-- Payroll run tidak pernah menggantung menunggu pihak ketiga hidup.
-- Data hulu yang salah kelihatan **sebelum** jadi slip gaji, dan penarikannya
-  bisa diulang tanpa menyentuh payroll sama sekali.
-- Kaitan antara angka insentif dan record asalnya tetap ada, jadi angkanya
-  masih bisa dijelaskan di kemudian hari.
+### Tidak ada yang final sebelum bisa direview manusia
 
-Tarif insentifnya sendiri berupa pemetaan, bukan perhitungan: hasil produksi
-dipetakan ke tabel tarif berjenjang. Jenjangnya data. Orang yang menegosiasikan
-ulang tarif tidak perlu lewat saya.
+Dua hal praktis tidak bisa dibatalkan: payroll run yang sudah diposting, dan
+THR — pembayaran wajib yang dihitung dari rentang dua belas bulan. Keduanya
+diberi tahap review sebelum final.
 
-### Tidak ada yang jadi final sebelum bisa direview manusia
+THR dihitung dulu ke rekap tersendiri yang direview dan disetujui bagian
+keuangan *sebelum* masuk ke slip gaji siapa pun. Payroll run dikunci prasyarat
+yang dicek sistem sendiri: absensi lengkap, data hulu sudah ditarik, cuti,
+lembur, dan surat sanksi sudah disetujui. Dulu itu pengetahuan lisan siapa pun
+yang menjalankan payroll bulan lalu; sekarang checklist yang dievaluasi dan
+ditampilkan sistem.
 
-Dua hal di sistem ini praktis tidak bisa dibatalkan: payroll run yang sudah
-diposting, dan THR — pembayaran wajib yang nilainya bergantung masa kerja dan
-jenis karyawan, dan dihitung dari rentang dua belas bulan, bukan satu periode.
+Mode kegagalan yang dicegah spesifik dan mahal: run yang selesai sukses di
+atas data belum lengkap. Tidak ada error apa pun — angkanya saja yang salah,
+dan tidak ada yang tahu sampai orang-orang dibayar.
 
-Keduanya diberi tahap review sebelum final.
+### Aturan pajak sebagai data, bukan kode
 
-THR dihitung dulu ke rekap tersendiri untuk direview, disesuaikan, dan
-disetujui bagian keuangan *sebelum* angkanya masuk ke slip gaji siapa pun. Dan
-payroll run dikunci oleh prasyarat yang dicek sistem sendiri: data fingerprint
-lengkap sampai akhir periode, data produksi sudah ditarik, cuti, lembur, dan
-surat sanksi sudah disetujui. Dulu semua itu pengetahuan lisan, dipegang siapa
-pun yang menjalankan payroll bulan lalu. Sekarang jadi checklist yang dievaluasi
-dan ditampilkan sistem.
+Sistem ini mengikuti **PPh 21** metode TER, **BPJS**, dan **PP 58/2023**.
+Aturan pajak berubah, dan kalau di-*hardcode*, tiap revisi pemerintah berarti
+deploy ulang — instrumen yang buruk untuk perubahan yang seharusnya
+diputuskan bagian keuangan, bukan engineer.
 
-Mode kegagalan yang dicegah di sini spesifik dan mahal: payroll run yang
-selesai dengan sukses di atas data yang belum lengkap. Tidak ada error apa pun.
-Angkanya saja yang salah, dan tidak ada yang tahu sampai orang-orang dibayar.
-
-### Aturan pajak disimpan sebagai data, bukan kode
-
-Sistem ini mengikuti PPh 21 metode TER, BPJS, dan PP 58/2023.
-
-Aturan pajak berubah. Kalau tarifnya di-*hardcode*, setiap revisi pemerintah
-berarti deploy ulang. Padahal yang paling paham angkanya bagian keuangan, bukan
-engineer.
-
-Jadi konstantanya **bisa diubah dari halaman admin, dengan nilai resmi yang
-sudah di-seed di awal**. Logika perhitungan urusan engineer, angkanya urusan
-bagian keuangan. Audit trail mencatat siapa mengubah konstanta apa dan kapan.
-Itu yang bikin pembagian tugas ini aman, bukan cuma praktis.
+Konstantanya **bisa diubah dari halaman admin, dengan nilai resmi yang
+di-seed di awal**. Logika perhitungan urusan engineer, angkanya urusan
+keuangan. Audit trail mencatat siapa mengubah konstanta apa dan kapan — yang
+bikin pembagian tugas ini aman, bukan cuma praktis.
 
 ### Dua perbaikan yang muncul dari data asli
 
-- **Take-home negatif ditolak, bukan ditulis.** Gabungan beberapa potongan bisa
-  melebihi gaji kotor. Secara hitungan valid, tapi tidak masuk akal untuk
-  dibayarkan. Sekarang payroll run-nya berhenti dan mengangkat kasusnya ke
-  manusia.
-- **Prorate pakai hari kerja, bukan hari kalender.** Karyawan yang masuk tengah
-  bulan dibayar atas hari yang memang bisa dia kerjakan. Prorate kalender
-  diam-diam merugikan orang yang masuk di bulan dengan akhir pekan menumpuk di
-  awal.
+- **Take-home negatif ditolak, bukan ditulis.** Gabungan potongan bisa
+  melebihi gaji kotor — secara hitungan valid, tidak masuk akal untuk
+  dibayarkan. Run-nya berhenti dan mengangkat kasusnya ke manusia.
+- **Prorate pakai hari kerja, bukan hari kalender.** Prorate kalender diam-diam
+  merugikan orang yang masuk di bulan dengan akhir pekan menumpuk di awal.
 
 ### Security
 
 Sistem ini menyimpan data gaji dan NIK, jadi melewati satu tahap hardening
 khusus:
 
-- **Pembatasan sampai level baris, bukan cuma level halaman.** Admin HRD bisa
-  membuka modul karyawan dan tetap tidak melihat semua orang di dalamnya.
-  Visibilitasnya dibatasi peringkat jabatan: admin melihat setara dan di
-  bawahnya, tidak ke atas. Sebagian data dibatasi lebih jauh lagi, hanya untuk
-  direksi, manajer accounting, dan superadmin. Di data gaji, "boleh tidak user
-  ini membuka halaman ini" itu pertanyaan yang salah. Yang benar: baris mana
-  yang boleh dikembalikan halaman itu.
-- **Immutability guard** untuk payroll yang sudah posted. Run yang sudah
-  selesai itu catatan historis, dan aplikasi tidak boleh bisa mengubah sejarah.
-- **JWT revocation**, supaya sesi karyawan yang sudah keluar mati saat itu
-  juga, bukan menunggu token kedaluwarsa sendiri.
-- **Rate limiting** di endpoint login dan ekspor data.
-- **Kebocoran `passwordHash`** lewat relasi yang ikut ter-*eager load*. Satu
-  relasi user terserialisasi utuh ke response API yang sebenarnya tidak
-  berhubungan. Ketemunya karena saya baca response-nya, bukan baca kodenya.
+| Kontrol | Yang dicegah |
+|---|---|
+| Visibilitas per baris, bukan per halaman | Admin HRD melihat setara dan di bawahnya saja — bukan soal "boleh buka halaman", tapi "baris mana yang boleh dikembalikan" |
+| Immutability run yang sudah posted | Run selesai itu catatan historis, aplikasi tidak boleh mengubah sejarah |
+| JWT revocation saat terminasi | Sesi karyawan yang keluar mati saat itu juga, bukan menunggu token kedaluwarsa |
+| Rate limiting | Di endpoint login dan ekspor data |
+
+Satu bug yang layak disebut sendiri: kebocoran `passwordHash` lewat relasi
+yang ikut ter-*eager load* — satu relasi user terserialisasi utuh ke response
+API yang tidak berhubungan. Ketemu karena saya baca response-nya, bukan baca
+kodenya.
 
 ### Audit trail untuk 10 entitas
 
-Bukan logging yang ditulis ulang per fitur, tapi audit trail **generik untuk 10
-entitas**. Satu mekanisme, satu skema, satu tempat untuk mencari. Setiap
-perubahan tercatat lengkap: siapa pelakunya, kapan, nilai sebelum dan sesudah.
-
-Bagian ini yang bikin "setiap angka bisa dilacak" jadi kenyataan, bukan sekadar
-niat baik. Angka yang dipersoalkan enam bulan kemudian bisa ditelusuri balik ke
-data dan keputusan yang menghasilkannya, tanpa perlu ada yang mengingat-ingat.
+Bukan logging per fitur, tapi satu **mekanisme generik untuk 10 entitas** —
+satu skema, satu tempat mencari, tiap perubahan tercatat lengkap: pelaku,
+waktu, nilai sebelum dan sesudah. Bagian ini yang bikin "setiap angka bisa
+dilacak" jadi kenyataan: angka yang dipersoalkan enam bulan kemudian bisa
+ditelusuri balik ke data dan keputusan yang menghasilkannya.
 
 ## Hasil
 
 - Rilis **Juni 2026**, produksi untuk **800+ karyawan**.
-- Sampai sekarang masih saya yang rawat.
-- Sistem internal 2024 tetap jadi basis arsitekturnya, dan core-nya sekarang
-  dipakai lintas proyek klien.
+- Sampai sekarang masih saya yang rawat — untuk sistem payroll, itu sendiri
+  sebuah verdict: sistem yang buruk bukan diganti diam-diam, tapi diganti
+  *dengan ribut*.
+- Sistem internal 2024 tetap jadi basis arsitekturnya, sekarang dipakai lintas
+  proyek klien.
 - Dikerjakan sambil memimpin 2 proyek dan 2 engineer, termasuk scoping
   kebutuhan langsung dengan klien.
 
 ## Yang akan saya lakukan berbeda
 
 Scope resolution engine ini abstraksi yang tepat, tapi saya membangunnya
-sebelum ada kasus kedua yang memakainya. Artinya urutan prioritasnya saya
-tebak, bukan saya turunkan dari kebutuhan nyata. Kebetulan tebakannya benar.
-
-Lain kali saya akan tahan dulu, biarkan kodenya duplikat satu siklus lagi.
-Bentuk abstraksinya lebih baik ditentukan dua kasus nyata, daripada satu kasus
-ditambah asumsi.
+sebelum ada konsumen kedua — menebak hierarkinya, bukan menurunkannya dari
+kebutuhan nyata. Kebetulan tebakannya benar. Lain kali saya akan tahan dulu,
+biarkan kodenya duplikat satu siklus lagi, dan biarkan dua kasus nyata yang
+menentukan bentuk abstraksinya.

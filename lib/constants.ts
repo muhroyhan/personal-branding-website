@@ -80,6 +80,6 @@ export const TECH_STACK_GROUPS: { key: TechStackGroupKey; items: string[] }[] = 
   },
   {
     key: "infra",
-    items: ["PostgreSQL", "MySQL", "Docker", "GitHub", "Postman"],
+    items: ["MySQL", "Docker", "GitHub", "Postman"],
   },
 ];

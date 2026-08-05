@@ -8,50 +8,48 @@ period: "2022 · Senior Software Engineer"
 featured: true
 ---
 
+| | |
+|---|---|
+| **Role** | Senior Software Engineer — sole owner, first commit to handover |
+| **Scope** | Employee credit — application, approval, generated agreement |
+| **Architecture** | Multi-tenant, 3 portals: bank admin, employer HR, borrower |
+| **Stack** | Node.js, Express.js, Sequelize, MySQL, React |
+
 ## The constraint
 
 In 2022 I took a credit system for a *Bank Perkreditan Rakyat* — an Indonesian
-rural credit bank — from first commit through to handover. It was the first
-project I owned end to end, and the least forgiving domain I had worked in.
+rural credit bank — from first commit through to handover. First project I
+owned end to end, and the least forgiving domain I had worked in.
 
-The product is employee lending. A company partners with the bank; its staff
-apply for credit against their salary; the company's HR verifies that the
-applicant is who they say they are and earns what they claim; the bank
-underwrites and approves. Three parties, three portals, one system.
+The product is employee lending: a company partners with the bank, its staff
+apply for credit against their salary, the company's HR verifies the
+applicant, the bank underwrites and approves. Three parties, three portals,
+one system.
 
 Banking software has no cosmetic bugs. A misplaced figure is somebody's debt,
-and the people it belongs to find out before you do. There is no staging
-environment for a customer's loan.
+and the person it belongs to finds out before you do.
 
 ## What the system actually produces
 
 Most systems output a screen. This one outputs a **contract**.
 
-At the end of a successful application the system generates the *PKS* — the
-credit agreement between the bank, the employer and the borrower — carrying the
-principal, the tenor, the monthly instalment, the interest, and the additional
-fees. That document is the thing people sign. Everything upstream of it exists
-to make sure it is right.
+At the end of a successful application, the system generates the *PKS* — the
+credit agreement between bank, employer and borrower, carrying the principal,
+tenor, monthly instalment, interest, and fees. That document is the thing
+people sign. Everything upstream exists to make sure it's right.
 
-Two consequences fell out of that, and they shaped the build more than any
-framework choice.
+**The commercial terms are per-tenant data, not code.** Each partner company
+is onboarded with its own interest table by tenor and its own fee schedule.
+Hard-coding a rate would mean a deploy every time the bank negotiates a new
+partner — and worse, a class of bug where the number on screen and the number
+in the contract disagree.
 
-**The commercial terms are per-tenant data, not code.** Each partner company is
-onboarded with its own interest table by tenor and its own fee schedule.
-Instalments are derived from those, and the generated agreement reflects the
-terms configured for that specific employer. Hard-coding a rate would have
-meant a deploy every time the bank negotiated a new partner — and, worse, a
-class of bug where the number on screen and the number in the contract could
-disagree.
-
-**Rejection has to be terminal and quiet.** An application rejected by the
-employer never reaches the bank's queue at all. That is a one-line rule, and it
-is the difference between a bank underwriter reviewing live applications and
-one wading through cases the employer already killed.
+**Rejection is terminal and quiet.** An application rejected by the employer
+never reaches the bank's queue. One line of logic, and the difference between
+an underwriter reviewing live applications versus wading through cases the
+employer already killed.
 
 ## The approval chain
-
-The flow is deliberately linear and deliberately interruptible:
 
 ```
 borrower applies
@@ -62,44 +60,43 @@ borrower applies
   → agreement (PKS) generated
 ```
 
-Every stage can end the process, and each stage belongs to a different party
-with different authority. The bank can amend the amount and the insurance cost;
-the employer cannot. The borrower can decline after approval, and that is a
-legitimate outcome rather than an error state — approving credit is not the
-same as taking it.
+Each stage belongs to a different party, with different authority:
 
-Notification at the approval step goes out over WhatsApp, because the borrower
-is a factory or office employee who is not sitting in the portal waiting. The
-system does not assume its users are watching it.
+| Party | Can amend terms | Can end the process |
+|---|---|---|
+| Employer (HR) | — | Reject only |
+| Bank | Amount, insurance cost | Approve or reject |
+| Borrower | — | Decline after approval |
+
+A borrower declining after approval is a legitimate outcome, not an error
+state — approving credit isn't the same as taking it. Notification at the
+approval step goes over WhatsApp, because the borrower is a factory or office
+employee who isn't sitting in the portal waiting.
 
 ## What actually shaped the design
 
 The technical work was ordinary: multi-tenant portals, role-scoped access,
-document capture for KYC, approvals, exports, generated agreements. What was
-not ordinary was the ending. This system was going to be handed to another
-team, and I was not going to be there to explain it.
+KYC document capture, approvals, exports. What wasn't ordinary was the ending —
+this system was going to be handed to another team, and I wasn't going to be
+there to explain it.
 
-That reframed almost every decision. The question stopped being "is this
-correct?" and became **"is this correct in a way the next person can verify
-without me?"** Those are not the same requirement, and the second one is
-strictly harder:
+The question stopped being "is this correct?" and became **"is this correct in
+a way the next person can verify without me?"**
 
-- **Explicit over clever.** Anywhere a concise expression and an obvious one
+- **Explicit over clever.** Where a concise expression and an obvious one
   disagreed, I took the obvious one. Cleverness is a loan against someone
   else's time.
-- **Domain language in the code.** The names in the schema and the services
-  match the names the bank's staff use — *debitor*, *angsuran*, *PKS*. A
-  maintainer who does not know the codebase but does know the domain can still
-  navigate it.
-- **Boundaries where the handover would cut.** Modules were drawn along lines
-  a new team could take ownership of one at a time — bank admin, employer
-  admin, borrower — rather than along the lines that were most convenient while
-  I was the only one writing.
+- **Domain language in the code.** Schema and service names match what bank
+  staff actually say — *debitor*, *angsuran*, *PKS*. A maintainer who doesn't
+  know the codebase but knows the domain can still navigate it.
+- **Boundaries where the handover would cut.** Modules split along lines a new
+  team could take one at a time — bank admin, employer admin, borrower — not
+  along whatever was convenient while I was the only one writing.
 
-Access control got the same treatment. Bank administrators are granted
+Access control got the same treatment: bank administrators are granted
 read/write per feature rather than by role bundle, and the system refuses to
-let the last remaining administrator be deleted. A permission model that can
-lock every human out of the bank's own console is not a security feature.
+delete the last remaining administrator. A permission model that can lock
+every human out of the bank's own console isn't a security feature.
 
 ## What it taught
 

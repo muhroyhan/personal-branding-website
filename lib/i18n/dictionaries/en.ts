@@ -12,10 +12,10 @@ export const en = {
   meta: {
     title: "Muhammad Royhan — Senior Fullstack Engineer",
     description:
-      "Senior Fullstack Engineer and Team Lead. Seven years and three promotions at one company — payroll for 800+ employees, core banking, ERP and marketplace systems built to stay explainable after handover.",
+      "Senior Fullstack Engineer and Team Lead. Seven years and three promotions at one company — payroll for 800+ employees, employee lending, ERP and marketplace systems built to stay explainable after handover.",
     workTitle: "Work",
     workDescription:
-      "Case studies of production systems architected and shipped by Muhammad Royhan — payroll, core banking, ERP.",
+      "Case studies of production systems architected and shipped by Muhammad Royhan — payroll, employee lending, ERP.",
     writingTitle: "Writing",
     writingDescription:
       "Essays by Muhammad Royhan connecting systems thinking and Stoic philosophy to real software architecture decisions.",
@@ -87,8 +87,8 @@ export const en = {
       role: "Senior Software Engineer",
       title: "Numbers that belong to someone else",
       paragraphs: [
-        "In 2022 I took an operational system for a rural credit bank — first commit through to handover. My first project owned end to end, in the least forgiving domain I had touched.",
-        "Banking software has no cosmetic bugs. A misplaced figure is somebody's balance, and the people it belongs to find out before you do.",
+        "In 2022 I took an employee credit system for a rural credit bank — first commit through to handover. My first project owned end to end, in the least forgiving domain I had touched.",
+        "Banking software has no cosmetic bugs. A misplaced figure is somebody's debt, and the person it belongs to finds out before you do.",
         "The handover taught me more than the build did. Code you hand to someone else has to explain itself without you in the room — a constraint I have designed for ever since.",
       ],
     },

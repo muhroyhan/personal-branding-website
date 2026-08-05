@@ -37,10 +37,10 @@ export const id: Dictionary = {
     // the two <title> tags must differ or the pages compete in search results.
     title: "Muhammad Royhan — Senior Fullstack Engineer & Team Lead",
     description:
-      "Senior Fullstack Engineer & Team Lead. 7 tahun, 3 promosi, satu perusahaan. Sistem payroll 800+ karyawan, core banking BPR, ERP dan marketplace. Node.js, NestJS, React, Next.js, Flutter, PostgreSQL.",
+      "Senior Fullstack Engineer & Team Lead. 7 tahun, 3 promosi, satu perusahaan. Sistem payroll 800+ karyawan, kredit karyawan BPR, ERP dan marketplace. Node.js, NestJS, React, Next.js, Flutter, MySQL.",
     workTitle: "Proyek",
     workDescription:
-      "Studi kasus sistem produksi yang dirancang dan dirilis Muhammad Royhan: payroll 800+ karyawan, core banking BPR.",
+      "Studi kasus sistem produksi yang dirancang dan dirilis Muhammad Royhan: payroll 800+ karyawan, kredit karyawan BPR.",
     writingTitle: "Tulisan",
     writingDescription:
       "Tulisan Muhammad Royhan tentang systems thinking dan filsafat Stoik dalam keputusan arsitektur perangkat lunak.",
@@ -109,8 +109,8 @@ export const id: Dictionary = {
       role: "Senior Software Engineer",
       title: "Sistem bank, dari nol sampai serah terima",
       paragraphs: [
-        "Tahun 2022 saya pegang sistem operasional untuk Bank Perkreditan Rakyat. Dari commit pertama sampai serah terima. Proyek pertama yang saya kerjakan sendiri dari awal, di bidang yang tidak menoleransi kesalahan sekecil apa pun.",
-        "Di sistem perbankan tidak ada bug yang sifatnya cuma tampilan. Angka yang salah itu saldo nasabah. Tapi yang paling banyak mengajari saya justru serah terimanya: kode yang dilepas ke tim lain harus bisa menjelaskan dirinya sendiri, tanpa saya di ruangan.",
+        "Tahun 2022 saya pegang sistem kredit karyawan untuk Bank Perkreditan Rakyat. Dari commit pertama sampai serah terima. Proyek pertama yang saya kerjakan sendiri dari awal, di bidang yang tidak menoleransi kesalahan sekecil apa pun.",
+        "Di sistem perbankan tidak ada bug yang sifatnya cuma tampilan. Angka yang salah itu utang seseorang. Tapi yang paling banyak mengajari saya justru serah terimanya: kode yang dilepas ke tim lain harus bisa menjelaskan dirinya sendiri, tanpa saya di ruangan.",
       ],
     },
     inherited: {

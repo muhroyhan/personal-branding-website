@@ -39,7 +39,7 @@ of the English text.
 ## Stack
 
 React.js, Next.js, Flutter, TypeScript, Node.js, Express.js, NestJS,
-Sequelize.js, PostgreSQL, MySQL, Docker.
+Sequelize.js, MySQL, AWS SQS, Docker.
 
 ## Contact
 
