@@ -26,8 +26,17 @@ export function Footer({ locale, dict }: { locale: Locale; dict: Dictionary }) {
     <footer className="border-t border-border">
       <div className="mx-auto flex max-w-5xl flex-col gap-6 px-6 py-10">
         <div className="flex flex-col items-center gap-6 text-center sm:flex-row sm:justify-between sm:text-left">
-          <p className="font-mono text-caption text-muted-foreground">
+          <p className="flex items-center gap-3 font-mono text-caption text-muted-foreground">
             © {year} {dict.footer.rights}
+            <span aria-hidden className="text-border-strong">
+              ·
+            </span>
+            {/* Kept out of the main link row above and off the primary nav
+                entirely — it's a disclosure, not something worth competing
+                with Story/Work/Writing for a recruiter's attention. */}
+            <Link href={localePath(locale, "/privacy")} className="transition-colors hover:text-fg">
+              {dict.footer.privacy}
+            </Link>
           </p>
           <ul className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 font-mono text-caption tracking-wide text-muted-foreground uppercase">
             {footerLinks.map((link) => (

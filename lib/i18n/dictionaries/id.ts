@@ -21,6 +21,12 @@ import type { Dictionary } from "./en";
  *   - earn the next scroll. Each act ends on something unresolved, because a
  *     reader with sixty seconds only continues if stopping costs them something
  *
+ * Exception: `privacy` below addresses the reader directly ("Anda") rather
+ * than reflecting in "saya/kita". That's the register an Indonesian privacy
+ * notice is actually written in — a policy is not a story, and "kita" would
+ * blur "the site" and "you" together in exactly the sentences where the
+ * distinction matters most.
+ *
  * Typed as `Dictionary`, so any key added to `en.ts` breaks the build here
  * rather than silently rendering English inside an Indonesian page.
  */
@@ -38,6 +44,8 @@ export const id: Dictionary = {
     writingTitle: "Tulisan",
     writingDescription:
       "Tulisan Muhammad Royhan tentang systems thinking dan filsafat Stoik dalam keputusan arsitektur perangkat lunak.",
+    privacyTitle: "Privasi",
+    privacyDescription: "Apa yang dikumpulkan situs ini, untuk apa, dan apa yang tidak.",
   },
 
   nav: {
@@ -260,5 +268,56 @@ export const id: Dictionary = {
     linkedin: "LinkedIn",
     github: "GitHub",
     resume: "CV",
+    privacy: "Privasi",
+  },
+
+  privacy: {
+    pageHeading: "Kebijakan Privasi",
+    lastUpdated: "Terakhir diperbarui: Agustus 2026",
+    intro:
+      "Ini situs portofolio pribadi, bukan perusahaan. Jadi halaman ini singkat saja: apa yang dikumpulkan, untuk apa, dan apa yang tidak.",
+    collectHeading: "Yang dikumpulkan",
+    collectIntro: "Tiga hal saja, semuanya untuk keperluan situs. Bukan untuk melacak Anda.",
+    collectTable: [
+      {
+        item: "Preferensi bahasa (cookie `NEXT_LOCALE`)",
+        purpose:
+          "Mengingat apakah Anda membaca versi Indonesia atau Inggris, supaya tidak dialihkan ulang setiap kunjungan.",
+        retention: "1 tahun, atau sampai Anda hapus sendiri",
+      },
+      {
+        item: "Perkiraan negara, dari penyedia hosting",
+        purpose:
+          "Dibaca sekali di edge server untuk menentukan pengalihan ke versi Indonesia saat kunjungan pertama. Tidak ada yang disimpan selain hasil akhirnya.",
+        retention: "Tidak disimpan",
+      },
+      {
+        item: "Kunjungan halaman teragregasi (Vercel Analytics)",
+        purpose:
+          "Menghitung jumlah kunjungan dan halaman populer. Berjalan tanpa cookie dan tidak terkait ke Anda secara individu.",
+        retention: "Mengikuti kebijakan retensi Vercel sendiri",
+      },
+    ],
+    notCollectedHeading: "Yang tidak dilakukan situs ini",
+    notCollectedItems: [
+      "Tidak ada akun, login, atau profil pengguna dalam bentuk apa pun.",
+      "Tidak ada form kontak. Tombol di situs ini langsung membuka email, WhatsApp, atau LinkedIn Anda. Apa pun yang Anda kirim lewat sana jadi tanggung jawab platform itu, bukan halaman ini.",
+      "Tidak ada cookie iklan atau retargeting. Tidak ada data yang dijual atau dibagikan ke pihak ketiga mana pun.",
+    ],
+    thirdPartyHeading: "Pihak yang terlibat",
+    thirdPartyParagraphs: [
+      "Situs ini di-hosting di Vercel, yang juga menjalankan analytics tanpa cookie di atas. Kebijakan mereka ada di dokumentasi privasi Vercel sendiri.",
+      "Tautan email, WhatsApp, dan LinkedIn di header dan footer membawa Anda langsung ke layanan tersebut. Saya tidak melihat apa pun yang terjadi di sisi mereka.",
+    ],
+    choicesHeading: "Pilihan Anda",
+    choicesParagraphs: [
+      "Anda bisa memblokir atau menghapus cookie `NEXT_LOCALE` kapan saja lewat pengaturan browser. Situsnya tetap jalan. Cuma akan memeriksa ulang perkiraan bahasa Anda di kunjungan berikutnya, bukan mengingat pilihan terakhir.",
+      "Mengganti bahasa lewat tombol EN / ID di header selalu menang dibanding apa pun yang tersimpan di cookie.",
+    ],
+    contactHeading: "Pertanyaan",
+    contactParagraph: "Kirim email ke {email} kalau ada bagian yang kurang jelas atau ingin dijelaskan lebih lanjut.",
+    changesHeading: "Perubahan",
+    changesParagraph:
+      "Halaman ini bisa diperbarui seiring perubahan situs. Tanggal di atas selalu mencerminkan versi terbaru. Tidak ada changelog terpisah untuk halaman sesingkat ini.",
   },
 };

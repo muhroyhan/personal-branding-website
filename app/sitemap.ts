@@ -23,6 +23,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...workSlugs.map((slug) => ({ path: `/work/${slug}`, priority: 0.7 })),
     { path: "/writing", priority: 0.8 },
     ...writingSlugs.map((slug) => ({ path: `/writing/${slug}`, priority: 0.6 })),
+    { path: "/privacy", priority: 0.2 },
   ];
 
   return entries.flatMap(({ path, priority }) =>

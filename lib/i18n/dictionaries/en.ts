@@ -19,6 +19,8 @@ export const en = {
     writingTitle: "Writing",
     writingDescription:
       "Essays by Muhammad Royhan connecting systems thinking and Stoic philosophy to real software architecture decisions.",
+    privacyTitle: "Privacy",
+    privacyDescription: "What this site collects, why, and what it doesn't.",
   },
 
   nav: {
@@ -252,6 +254,64 @@ export const en = {
     linkedin: "LinkedIn",
     github: "GitHub",
     resume: "Resume",
+    privacy: "Privacy",
+  },
+
+  /**
+   * Written for what this site actually does, not templated from a generator —
+   * a personal site with three data points (a locale cookie, a geo header read
+   * once at the edge, and cookieless aggregate analytics) doesn't need the
+   * boilerplate a SaaS privacy policy carries, and padding it out would just
+   * make the real disclosures harder to find.
+   */
+  privacy: {
+    pageHeading: "Privacy",
+    lastUpdated: "Last updated: August 2026",
+    intro:
+      "This is a personal portfolio, not a company, so this stays short: what's collected, why, and what isn't.",
+    collectHeading: "What's collected",
+    collectIntro: "Three things, all in service of the site itself — nothing to track you with.",
+    collectTable: [
+      {
+        item: "Language preference (`NEXT_LOCALE` cookie)",
+        purpose:
+          "Remembers whether you're reading the English or Indonesian version, so you're not redirected on every visit.",
+        retention: "1 year, or until you clear it",
+      },
+      {
+        item: "Approximate country, from the hosting provider",
+        purpose:
+          "Read once at the edge to decide whether to redirect you to the Indonesian version on your first visit. Nothing beyond the resulting locale is stored.",
+        retention: "Not stored",
+      },
+      {
+        item: "Aggregated page views (Vercel Analytics)",
+        purpose:
+          "Counts visits and popular pages. Runs without cookies and isn't tied to you individually.",
+        retention: "Per Vercel's own retention policy",
+      },
+    ],
+    notCollectedHeading: "What this site doesn't do",
+    notCollectedItems: [
+      "No account, login, or user profile of any kind.",
+      "No contact form — the buttons here open your email client, WhatsApp, or LinkedIn directly. Whatever you send through those is governed by that platform's own privacy policy, not this one.",
+      "No advertising or retargeting cookies. Nothing is sold or shared with data brokers.",
+    ],
+    thirdPartyHeading: "Who this passes through",
+    thirdPartyParagraphs: [
+      "The site is hosted on Vercel, which also runs the cookieless analytics mentioned above. Their practices are documented in Vercel's own privacy policy.",
+      "The email, WhatsApp, and LinkedIn links in the header and footer send you to those services directly — I don't see anything that happens on their side.",
+    ],
+    choicesHeading: "Your choices",
+    choicesParagraphs: [
+      "Block or clear the `NEXT_LOCALE` cookie any time in your browser settings. The site still works — it just re-checks your likely language on the next visit instead of remembering your last one.",
+      "Switching language with the EN / ID toggle in the header always overrides whatever the cookie currently says.",
+    ],
+    contactHeading: "Questions",
+    contactParagraph: "Email {email} if anything here is unclear or you'd like it explained further.",
+    changesHeading: "Changes",
+    changesParagraph:
+      "This page may be updated as the site changes. The date at the top always reflects the latest version — there's no separate changelog for a page this short.",
   },
 };
 
