@@ -59,12 +59,23 @@ export const CONTACT_LINKS = {
 /** Lives in `public/`, so it is locale-independent and needs no prefix. */
 export const RESUME_PATH = "/royhan-resume.pdf";
 
+/**
+ * Neither file exists yet — both components that use these paths
+ * (`ProfilePhoto`, `VideoIntro`) render nothing until something actually
+ * answers at the path, so adding the file is the whole activation step: drop
+ * a square photo at `public/images/profile.jpg` (roughly 480×480, it renders
+ * as a circle so a tight square crop works best), or an MP4 at
+ * `public/videos/intro.mp4`. No other code change needed.
+ */
+export const PROFILE_PHOTO_PATH = "/images/profile.jpg";
+export const VIDEO_INTRO_PATH = "/videos/intro.mp4";
+
 // Must be set to the real production URL (Vercel project URL or custom
 // domain) once deployed — see README's manual setup checklist. Falls back
 // to localhost so sitemap/robots/JSON-LD still generate valid absolute
 // URLs during local dev.
 export const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL ?? "https://personal-branding-website-two.vercel.app";
+  process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 
 export type TechStackGroupKey = "frontend" | "backend" | "infra";
 

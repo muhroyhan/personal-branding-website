@@ -4,6 +4,7 @@ import { Fragment } from "react";
 import Link from "next/link";
 import { motion, type Variants } from "motion/react";
 import { Term } from "@/components/ui/term-tooltip";
+import { ProfilePhoto } from "@/components/ui/profile-photo";
 import { LiveBlueprint } from "@/components/motifs/live-blueprint";
 import { MeanderRule } from "@/components/motifs/meander-rule";
 import { ACT_ANCHORS, RESUME_PATH } from "@/lib/constants";
@@ -61,6 +62,10 @@ export function Hero({ locale, dict }: { locale: Locale; dict: Dictionary }) {
         transition={{ duration: 0.5, delay: 0.05 }}
         className="flex flex-col items-center gap-1.5"
       >
+        <ProfilePhoto
+          alt={t.name}
+          className="mb-1.5 h-24 w-24 rounded-full border border-border-strong object-cover"
+        />
         <p className="font-mono text-caption tracking-wide text-muted-foreground uppercase">
           {t.name}
         </p>
@@ -68,6 +73,17 @@ export function Hero({ locale, dict }: { locale: Locale; dict: Dictionary }) {
           {t.role}
         </p>
       </motion.div>
+
+      {/* Problem-first line, ahead of the poetic headline: a recruiter with
+          three seconds should learn what domain this is before the hook. */}
+      <motion.p
+        initial={{ opacity: 0, y: 6 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.15 }}
+        className="max-w-lg text-body font-medium text-fg"
+      >
+        {t.positioning}
+      </motion.p>
 
       <motion.h1
         variants={container}

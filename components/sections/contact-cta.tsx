@@ -5,6 +5,7 @@ import { CONTACT_LINKS, RESUME_PATH } from "@/lib/constants";
 import type { Dictionary } from "@/lib/i18n";
 import { CarvedText } from "@/components/motion/carved-text";
 import { MeanderRule } from "@/components/motifs/meander-rule";
+import { VideoIntro } from "@/components/ui/video-intro";
 
 const LINK_CLASS =
   "inline-flex items-center gap-2 rounded-md border border-border-strong px-5 py-2.5 font-mono text-caption tracking-wide text-fg uppercase transition-all duration-150 hover:border-accent hover:text-accent active:scale-95";
@@ -36,6 +37,8 @@ export function ContactCta({ dict }: { dict: Dictionary }) {
       />
       <MeanderRule className="max-w-32 text-border-strong" />
       <p className="max-w-md text-body text-muted-foreground">{t.intro}</p>
+
+      <VideoIntro label={t.videoLabel} className="w-full max-w-md" />
 
       <div className="flex flex-wrap items-center justify-center gap-3">
         <button type="button" onClick={handleCopyEmail} className={LINK_CLASS}>

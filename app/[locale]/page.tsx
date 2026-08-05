@@ -6,7 +6,9 @@ import { ActThreeInherited } from "@/components/sections/act-three-inherited";
 import { ArchitectureStory } from "@/components/sections/architecture-story";
 import { ActFiveNow } from "@/components/sections/act-five-now";
 import { WorkPreview } from "@/components/sections/work-preview";
+import { Testimonials } from "@/components/sections/testimonials";
 import { TechStack } from "@/components/sections/tech-stack";
+import { WhoFor } from "@/components/sections/who-for";
 import { ContactCta } from "@/components/sections/contact-cta";
 import { StoryRail } from "@/components/story/story-rail";
 import { ScrollReveal } from "@/components/motion/scroll-reveal";
@@ -55,7 +57,13 @@ export default async function Home({
         <WorkPreview locale={locale} dict={dict} />
       </ScrollReveal>
       <ScrollReveal>
+        <Testimonials locale={locale} dict={dict} />
+      </ScrollReveal>
+      <ScrollReveal>
         <TechStack dict={dict} />
+      </ScrollReveal>
+      <ScrollReveal>
+        <WhoFor dict={dict} />
       </ScrollReveal>
       <ScrollReveal>
         <ContactCta dict={dict} />

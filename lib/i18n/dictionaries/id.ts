@@ -65,6 +65,7 @@ export const id: Dictionary = {
   hero: {
     name: "Muhammad Royhan",
     role: "Senior Fullstack Engineer · Team Lead",
+    positioning: "Sistem yang salah angkanya berarti gaji orang tidak sampai — payroll, kredit, compliance.",
     headline: "Tujuh tahun membangun sistem yang tidak boleh salah.",
     leadBefore:
       "Backend dan frontend. Tujuh tahun, tiga promosi, satu perusahaan. Cara kerja saya bertumpu pada ",
@@ -98,10 +99,10 @@ export const id: Dictionary = {
     beginnings: {
       year: "2019",
       role: "Junior Software Engineer",
-      title: "Mulai dari kode warisan orang lain",
+      title: "Mulai dari kode legacy orang lain",
       paragraphs: [
-        "Saya tidak merencanakan masuk ke bidang ini. Moving Bytes Digital menerima saya tahun 2019. Pekerjaan pertama saya: membangun ERP, sekaligus melanjutkan marketplace sewa yang sudah dikerjakan orang lain.",
-        "Sampai 2021 saya merawat marketplace itu dan membangun aplikasi mobile-nya bersama tim. Dari situ muncul pertanyaan yang saya bawa sampai sekarang. Bagaimana caranya mengambil keputusan yang benar kalau variabelnya bukan milik kita?",
+        "Saya menghindari pekerjaan sebagai Software Engineer karena terlalu banyak saingan, tapi Moving Bytes Digital memberi saya kesempatan di tahun 2019. Pekerjaan pertama saya melanjutkan proyek ERP yang sudah berjalan, disusul proyek marketplace sewa barang yang sebelumnya sudah dikerjakan tim lain.",
+        "Sampai 2021 saya merawat marketplace itu sembari membangun aplikasi mobile-nya bersama tim. Dari situ muncul pertanyaan yang saya bawa sampai sekarang. Bagaimana caranya mengambil keputusan yang benar kalau variabelnya bukan milik kita?",
       ],
     },
     banking: {
@@ -110,7 +111,7 @@ export const id: Dictionary = {
       title: "Sistem bank, dari nol sampai serah terima",
       paragraphs: [
         "Tahun 2022 saya pegang sistem kredit karyawan untuk Bank Perkreditan Rakyat. Dari commit pertama sampai serah terima. Proyek pertama yang saya kerjakan sendiri dari awal, di bidang yang tidak menoleransi kesalahan sekecil apa pun.",
-        "Di sistem perbankan tidak ada bug yang sifatnya cuma tampilan. Angka yang salah itu utang seseorang. Tapi yang paling banyak mengajari saya justru serah terimanya: kode yang dilepas ke tim lain harus bisa menjelaskan dirinya sendiri, tanpa saya di ruangan.",
+        "Di sistem kredit karyawan, tidak ada bug yang sifatnya cuma tampilan. Angka yang salah itu utang seseorang. Tapi yang paling banyak mengajari saya justru serah terimanya: kode yang dilepas ke tim lain harus bisa menjelaskan dirinya sendiri, tanpa saya di ruangan.",
       ],
     },
     inherited: {
@@ -119,7 +120,7 @@ export const id: Dictionary = {
       title: "Dipromosikan untuk merawat sistem orang lain",
       paragraphs: [
         "Promosi Team Lead datang tahun 2023. Bukan yang membangun sistem baru, bukan juga yang memimpin proyek unggulan. Yang menjaga semua sistem yang sudah rilis tetap jalan.",
-        "Hampir sepanjang tahun itu saya bekerja di dalam keputusan yang bukan saya buat, di kode yang tidak boleh saya tulis ulang, dengan tenggat yang bukan saya tentukan. Pelajarannya satu. Apa yang kita warisi hampir tidak pernah bisa kita kendalikan. Yang bisa kita kendalikan cuma satu: apakah orang berikutnya menerimanya dalam kondisi lebih jelas.",
+        "Hampir sepanjang tahun itu saya bekerja di dalam keputusan yang bukan saya buat, di kode yang tidak boleh saya tulis ulang, dengan tenggat yang bukan saya tentukan. Pelajarannya satu. Sistem yang kita lanjutkan hampir tidak pernah bisa kita kendalikan. Yang bisa kita kendalikan cuma satu: apakah orang berikutnya menerimanya dalam kondisi lebih jelas.",
       ],
       dichotomyIntro:
         "Setelah tujuh tahun, kira-kira begini saya memilahnya. Coba dulu beberapa sebelum lihat jawaban saya.",
@@ -138,9 +139,9 @@ export const id: Dictionary = {
       question:
         "Balik ke pertanyaan di awal. Bagaimana caranya mengambil keputusan yang benar kalau variabelnya bukan milik kita?",
       paragraphs: [
-        "Sampai sekarang saya belum punya jawaban yang rapi, dan sudah berhenti menunggu. Yang saya punya cara kerja: pisahkan yang bisa dirancang (batas modul, kepemilikan, keterlacakan) dari yang cuma bisa dihadapi.",
-        "Saya masuk bidang ini bukan karena passion. Saya bertahan karena ada orang yang bergantung pada hasil kerja saya. Ternyata itu alasan yang jauh lebih awet.",
-        "Di luar payroll, ada proyek sampingan Maret–Juni 2025 yang membawa cara kerja yang sama ke tim lintas negara.",
+        "Sampai sekarang saya belum punya jawaban yang tepat. Saya sudah berhenti menunggu. Yang saya punya adalah prinsip kerja: pisahkan yang bisa dirancang (batas modul, kepemilikan, keterlacakan) dari yang cuma bisa dihadapi.",
+        "Saya masuk bidang ini bukan karena passion. Saya bertahan karena ada orang yang bergantung pada hasil kerja saya. Ternyata itu alasan yang jauh lebih kuat.",
+        "Di luar proyek payroll, Maret–Juni 2025 saya dipercaya perusahaan untuk proyek sampingan lintas negara. Semacam pembuktian apakah saya bisa sejajar dengan engineer dari negara lain.",
       ],
     },
   },
@@ -196,7 +197,7 @@ export const id: Dictionary = {
     sortLabel: "Pilah: {item}",
     items: {
       "inherited-code": {
-        label: "Codebase yang kita warisi",
+        label: "Codebase yang kita lanjutkan",
         note: "Keputusan yang sudah terlanjur dibuat bukan pilihan kita. Yang jadi pilihan kita cuma satu: apakah orang berikutnya menerimanya lebih jelas.",
       },
       "client-deadline": {
@@ -239,6 +240,12 @@ export const id: Dictionary = {
     empty: "Tulisan pertama sedang disiapkan. Silakan mampir lagi.",
   },
 
+  testimonials: {
+    eyebrow: "Kata mereka",
+    heading: "Testimoni",
+    intro: "Singkat, apa adanya, dari orang yang pernah bekerja langsung dengan saya.",
+  },
+
   stack: {
     eyebrow: "Bukti",
     heading: "Tech Stack",
@@ -250,10 +257,29 @@ export const id: Dictionary = {
     },
   },
 
+  whoFor: {
+    eyebrow: "Kecocokan",
+    heading: "Kapan saya cocok direkrut",
+    intro: "Hubungi kalau situasinya salah satu dari ini.",
+    bullets: [
+      "Angka yang salah punya konsekuensi hukum atau finansial. Payroll, kredit, compliance, apa pun yang hasilnya ditandatangani orang.",
+      "Codebase payroll, kredit, atau compliance yang sudah tidak ada lagi yang paham sepenuhnya.",
+      "Tim kehilangan senior engineer yang memegang konteksnya.",
+      "Sistem yang harus lolos audit, atau diserahterimakan ke tim yang tidak ikut membangunnya.",
+    ],
+    availabilityLabel: "Ketersediaan",
+    availability: [
+      "Remote-first",
+      "WIB · UTC+7",
+      "EOR, kontrak, atau full-time",
+      "Notice period 2 minggu",
+    ],
+  },
+
   contact: {
     heading: "Sedang mencari Senior Fullstack Engineer atau Team Lead?",
-    intro:
-      "Saya terbuka untuk peran itu, baik remote, hybrid, maupun on-site. Silakan hubungi langsung, tidak perlu isi form.",
+    intro: "Silakan hubungi langsung, tidak perlu isi form.",
+    videoLabel: "Tonton perkenalan 60 detik",
     copyEmail: "Salin email",
     copied: "Tersalin!",
     whatsapp: "WhatsApp",
