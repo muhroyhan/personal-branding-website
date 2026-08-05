@@ -93,8 +93,18 @@ Once steps 1–2 are done, every PR will show both the GitHub Actions CI check a
 
 ## SEO artifacts
 
-- `app/sitemap.ts` → `/sitemap.xml` (auto-includes every `content/work/*.mdx` slug)
+- `app/sitemap.ts` → `/sitemap.xml` — every `content/work/*.mdx` and `content/writing/*.mdx` slug, `/privacy`, emitted once per locale with full `hreflang` alternates on each entry
 - `app/robots.ts` → `/robots.txt`
-- `app/opengraph-image.tsx` → dynamic branded OG image (`next/og`), used as the default for every page unless a route defines its own
-- JSON-LD `Person` schema in `app/layout.tsx` (name, jobTitle, `sameAs` → LinkedIn/GitHub)
-- `public/llms.txt` — plain-text site summary for LLM crawlers
+- `app/[locale]/opengraph-image.tsx` → dynamic branded OG image (`next/og`), locale-aware, used as the default for every page unless a route defines its own
+- JSON-LD `Person` schema in `app/[locale]/layout.tsx` (name, jobTitle, `sameAs` → LinkedIn/GitHub), plus `alternates.languages` in `generateMetadata` for hreflang
+- `public/llms.txt` — plain-text site summary for LLM crawlers, kept in sync with both locales manually (not generated)
+- `/privacy` — plain-language privacy notice (locale cookie, IP-derived redirect, cookieless Vercel Analytics), linked from the footer, not the primary nav
+
+## Content backlog (owner-only — can't be automated or guessed)
+
+These are already wired up in code as graceful no-ops, not blockers, but nothing shows on the live site until you do them:
+
+- **Profile photo**: drop a ~480×480 square image at `public/images/profile.jpg`. `ProfilePhoto` (`components/ui/profile-photo.tsx`) renders nothing until the file 200s.
+- **Video intro**: drop an MP4 at `public/videos/intro.mp4`. `VideoIntro` (`components/ui/video-intro.tsx`) same graceful-degrade pattern.
+- **Testimonials**: add entries to `TESTIMONIALS` in `lib/testimonials.ts` (empty array today). The section renders nothing at all until it has at least one.
+- **Business-impact numbers**: each case study (`content/work/{en,id}/*.mdx`) has a `<!-- TODO(business-impact) -->` comment marking where one real, concrete number belongs (turnaround time, dispute count, hours saved). Deliberately left unfilled rather than guessed — don't publish a number that isn't real.

@@ -3,6 +3,8 @@
 
 Target: remote/international engineering roles. Website ini bukan cuma "CV online" — perannya adalah membuktikan kapabilitas senior/tech-lead level lewat storytelling teknis, bukan cuma daftar skill.
 
+> **Status dokumen:** §1–6 di bawah adalah rencana awal (dibuat sebelum PBW-00 dimulai) dan tetap dipertahankan apa adanya sebagai *catatan rasional* — kenapa keputusan tertentu diambil. Proyek sudah berevolusi cukup jauh dari rencana awal ini lewat iterasi nyata. **§7 di paling bawah adalah update log yang merekonsiliasi rencana ini dengan kondisi kode saat ini** (terakhir disinkronkan 2026-08-05) — baca §7 dulu kalau tujuannya memahami kondisi *aktual* proyek, bukan sejarah perencanaannya. Untuk onboarding teknis cepat, lihat `tech_manuals.md`.
+
 ---
 
 ## 1. Poin yang Ditonjolkan
@@ -201,14 +203,85 @@ Mengikuti pola task ID yang sudah kamu pakai di project payroll (FE-Txx, TAX-xxx
 
 ## 6. Keputusan Final
 
-| # | Keputusan | Status |
-|---|---|---|
-| 1 | Flagship case study = payroll system, level detail teknis | ✅ Disetujui |
-| 2 | Contact via direct links (bukan form backend) | ✅ Disetujui |
-| 3 | Website full English | ✅ Disetujui |
-| 4 | Dark-only, tanpa theme toggle | ✅ Disetujui |
-| 5 | Domain: `*.vercel.app` (free) dulu, custom domain menyusul | ✅ Disetujui |
-| 6 | Deploy via GitHub → Vercel Git Integration + GitHub Actions sebagai CI gate | ✅ Ditambahkan |
-| 7 | PBW-18 (case study payroll) dikerjakan paling akhir, space/routing disiapkan lebih awal di PBW-07 | ✅ Ditambahkan |
+| # | Keputusan | Status awal | Status terkini |
+|---|---|---|---|
+| 1 | Flagship case study = payroll system, level detail teknis | ✅ Disetujui | ✅ Masih berlaku |
+| 2 | Contact via direct links (bukan form backend) | ✅ Disetujui | ✅ Masih berlaku |
+| 3 | Website full English | ✅ Disetujui | ⚠️ **Disupersede** — lihat §7.1 |
+| 4 | Dark-only, tanpa theme toggle | ✅ Disetujui | ✅ Masih berlaku |
+| 5 | Domain: `*.vercel.app` (free) dulu, custom domain menyusul | ✅ Disetujui | ✅ Masih berlaku |
+| 6 | Deploy via GitHub → Vercel Git Integration + GitHub Actions sebagai CI gate | ✅ Ditambahkan | ✅ Live — lihat §7.4 |
+| 7 | PBW-18 (case study payroll) dikerjakan paling akhir, space/routing disiapkan lebih awal di PBW-07 | ✅ Ditambahkan | ✅ Selesai, jadi flagship interaktif (§7.3) |
 
-Semua asumsi sudah terkunci. Tinggal eksekusi mulai **PBW-00**.
+Semua asumsi sudah terkunci saat dokumen ini pertama ditulis. Eksekusi mulai **PBW-00** sudah selesai jauh melewati task breakdown asli — lihat §7 untuk apa yang berubah di sepanjang jalan dan kenapa.
+
+---
+
+## 7. Update Log — Status Aktual (per 2026-08-05)
+
+Proyek sudah lewat beberapa putaran iterasi nyata (termasuk "theme changed: general with stoic and psycology approach styles" dan "marketing side") yang mengubah beberapa keputusan §1–6 di atas. Bagian ini adalah sumber kebenaran untuk kondisi *sekarang*; §1–6 tetap berguna untuk memahami *alasan* di balik keputusan yang masih berlaku.
+
+### 7.1 Locale: EN/ID bilingual (supersede keputusan #3)
+
+Keputusan awal "full English" diganti jadi bilingual penuh, bukan sekadar toggle kosmetik — dan ini bukan keputusan berdiri sendiri, dia konsekuensi langsung dari pergeseran tema di §7.2. Urutan sebab-akibatnya: tema filosofis dipilih dulu (§7.2), tema itu menciptakan tensi audiens (bagus untuk internasional, berat untuk HRD lokal), dan bilingual adalah cara menyelesaikan tensi itu tanpa membuang temanya. Baca §7.2 dulu kalau tujuannya paham *kenapa* dua register ini perlu ada, bukan cuma *bagaimana* mekanismenya:
+
+- **English (`/`)** memegang bare path (bukan `/en`) supaya URL yang sudah terindeks sebelum Indonesia ditambah tidak pernah redirect. **Indonesian (`/id`)** satu-satunya locale yang diprefix.
+- `middleware.ts` mendeteksi negara pengunjung lewat header geo Vercel (`x-vercel-ip-country`) pada first visit, redirect sekali ke `/id` kalau dari Indonesia, lalu mengunci keputusan itu ke cookie `NEXT_LOCALE` supaya tidak re-fire di visit berikutnya atau override manual switch.
+- Konten bukan hasil terjemahan mekanis: `public/llms.txt` eksplisit bilang register Indonesia "shorter, fact-first... not a translation of the English text" — EN untuk audiens internasional (long-form narrative), ID untuk kultur hiring lokal.
+- Semua string UI hidup di `lib/i18n/dictionaries/{en,id}.ts`; `lib/constants.ts` sengaja dikosongkan dari prose ("semua yang di file ini language-independent by design").
+- Case study MDX (`content/work/{en,id}/*.mdx`, `content/writing/{en,id}/*.mdx`) fallback ke English kalau versi Indonesia untuk slug itu belum ada — lihat `lib/mdx.ts`.
+
+Kalau nanti mau tambah locale ketiga, langkahnya ada di `tech_manuals.md`.
+
+### 7.2 Tema — kenapa "software engineer dengan bumbu filosofis dan psikologis" menggantikan brief §4
+
+Ini bukan cuma pergeseran token warna/font. Brief awal §4 eksplisit merekomendasikan positioning **"presisi, terstruktur, technical-but-warm"** — grotesk-technical, blue-black, node-graph timeline. Yang jadi terpilih dan bertahan sampai sekarang justru arah yang lebih berani: portofolio SWE dengan **kerangka filosofis (dikotomi kendali Stoik) dan psikologis** (narasi lima babak, satu pertanyaan yang dibuka di hero dan baru dijawab tuntas di babak terakhir) sebagai tulang punggung struktur situs, bukan hiasan yang ditempel di atas CV teknis.
+
+**Alasan strategisnya** — commit yang mengeksekusi ini ("theme changed: general with stoic and psycology approach styles") tidak menulis rasionalnya, jadi ini direkonstruksi dari bukti di kode dan dari keputusan yang konsisten di sepanjang commit sesudahnya:
+
+1. **Brief §4 sendiri sudah mewanti-wanti soal "terlihat AI-generated"** — tapi rekomendasi brief itu sendiri (grotesk-technical, dark-blue, node-graph timeline vertikal) *juga* sudah jadi default baru di 2026. Hampir tiap portofolio SWE bikinan AI-generator atau bootcamp pakai pola yang nyaris identik. Reviewer HR yang sudah lihat ratusan portofolio serupa tidak akan berhenti lama di pola itu. Register klasik/Stoik jauh lebih jarang dipakai di portofolio software engineer — beda secara genuin, bukan beda dari lawan yang gampang dikalahkan.
+2. **Bentuk situs meniru isi case study-nya sendiri.** Argumen inti tiap case study sama persis: sistem harus bisa dijelaskan, dilacak, diturunkan ulang tanpa penulisnya ada di ruangan — kalimat itu muncul independen di case study payroll, BPR, *dan* rental marketplace, jadi ini bukan tagline, ini benar-benar cara berpikirnya. Struktur homepage melakukan disiplin yang sama di level narasi: dibuka dengan pertanyaan ("bagaimana mengambil keputusan yang baik tanpa mengendalikan variabelnya"), dibangun babak demi babak, lalu ditutup dengan menyatakan ulang pertanyaan itu **dan** menerjemahkannya jadi silogisme formal tiga baris di akhir Act IV. Pembaca yang sampai ke silogisme itu baru saja menyaksikan penulisnya melakukan, dalam prosa, persis apa yang dilakukan engine payroll-nya dalam kode. Filosofinya bukan tempelan — ia demonstrasi struktural dari kedisiplinan yang sama yang diklaim tiap case study.
+3. **Cocok langsung dengan syarat Team Lead** yang disebut brief §1 poin 5 sendiri: "bisa komunikasi ke stakeholder non-teknis." Halaman yang bisa menahan perhatian pembaca lewat argumen filosofis *dan* tabel security-hardening sekaligus adalah bukti kemampuan komunikasi itu — lebih meyakinkan daripada satu bullet point yang cuma mengklaimnya.
+4. **Diingat, bukan cuma dibaca.** Klaim positioning ("senior fullstack engineer," "7 tahun 3 promosi") bersaing dengan lusinan portofolio nyaris identik per minggu di meja tiap reviewer HR. Suara penulis yang khas adalah yang bertahan lewat sepuluh detik pertama skim.
+
+**Konsekuensi yang harus dibayar — dan kenapa §7.1 (bilingual) ada:** register filosofis/literer ini bekerja untuk audiens internasional yang "rewards a point of view" (istilah dari komentar header `id.ts`), tapi jadi beban untuk HRD korporat Indonesia (Astra, Tokopedia, Shopee, Grab, dsb.) yang scan lusinan kandidat seminggu dan cuma punya waktu semenit per situs. Feedback langsung dari seorang teman soal versi live situs ini bilang persis itu: bahasanya terlalu berat, berisiko mengubur sinyal utama ("software engineer yang siap direkrut") di bawah bahasa literer.
+
+Perbaikannya **bukan** membuang habis filosofinya — itu akan menghilangkan justru poin 1–4 di atas. Perbaikannya memecah registernya per audiens: versi Inggris mempertahankan narasi lima babak penuh, kerangka Stoik, dan silogisme; versi Indonesia (`/id`) membawa kerangka yang sama tapi dipadatkan jadi pernyataan langsung, fakta dulu baru alasan — aturan itu di-encode eksplisit di komentar header `lib/i18n/dictionaries/id.ts` (kalimat pendek, tanpa calque, tanpa em dash, "kita/saya" bukan "Anda" kecuali di halaman kebijakan). Sistem i18n di §7.1 bukan terjemahan mekanis — dia mekanisme supaya satu orang bisa jadi dua versi situs yang sama-sama jujur, dengan takaran filosofi yang beda sesuai audiensnya.
+
+**Token desain yang berubah** (bukti visual dari pergeseran di atas — brief "grotesk-technical + blue-black" jadi **register klasik warm-ink**):
+
+- **Warna**: base sekarang `#0d0b0a` (ink) bukan `#0B0F14` (blue-black) — hue "warm, ink dan stone" dipilih supaya seirama dengan tipografi klasik yang dipakai (lihat komentar di `app/globals.css`: *"to sit with the classical register of the type"*). Accent amber-gold `#d4a24e` **tidak berubah** dari brief asli.
+- **Tipografi**: bukan Space Grotesk/General Sans seperti rekomendasi asli. Sekarang pakai 5 font: **Cormorant Garamond** (display/headline), **Cinzel** (angka Romawi act I–V dan label carved pendek, diambil dari huruf Trajan's column — dipakai sangat terbatas, bukan running text), **EB Garamond** (khusus glyph λ/Yunani, karena Cormorant tidak punya subset Greek), **Inter** (body), **JetBrains Mono** (label, nav, caption).
+- Semua token baru saling merujuk satu sama lain di komentar kode — bukan tempelan acak, satu keputusan visual yang konsisten sepanjang file.
+
+### 7.3 Struktur halaman — jadi narasi 5-babak, bukan section list linear
+
+Homepage (`app/[locale]/page.tsx`) sekarang literally "one continuous story in five acts, then the evidence layer" (kutipan dari komentar file itu sendiri), bukan urutan Hero→About→Timeline→Work→Stack→Contact dari brief §4:
+
+- `Hero` → `ActOneBeginnings` (2019) → `ActTwoBanking` (2022) → `ActThreeInherited` → `ArchitectureStory` (Act IV, payroll — **flagship interaktif**: scroll-driven SVG diagram + syllogism/argumen formal di akhir, bukan cuma "card besar" seperti brief) → `ActFiveNow` → lalu layer bukti: `WorkPreview` → `Testimonials` (baru dari commit "marketing side", kosong sampai `lib/testimonials.ts` diisi) → `TechStack` → `WhoFor` (qualifier StoryBrand-style, juga dari "marketing side") → `ContactCta`.
+- `StoryRail` (nav progress fixed di kiri layar, desktop only) melacak babak mana yang sedang dibaca via `IntersectionObserver` — elemen signature baru yang menggantikan konsep "node graph vertikal" dari brief §4 (num beda implementasi, ide serupa: progres linear yang terlihat).
+- Halaman baru yang tidak ada di brief awal: **`/writing`** (esai, MDX, sama pipeline dengan `/work`).
+
+### 7.4 CI/CD & branch flow — sudah live, detail beda dari brief §2/§5
+
+Brief awal cuma bilang "GitHub → Vercel Git Integration + GitHub Actions quality gate." Yang berjalan sekarang (lihat `README.md` untuk detail lengkap & checklist manual):
+
+- Branch flow: `daily work → PR ke develop → merge develop → PR develop ke main → merge main deploy production`. `develop` = integrasi harian, `main` = rilis.
+- `.github/workflows/ci.yml` jalan di PR ke **develop maupun main** (bukan cuma main) — install → lint → typecheck → `next build`, wajib hijau sebelum merge.
+- `NEXT_PUBLIC_SITE_URL` **wajib** diset di Vercel Production env (fallback lokal `http://localhost:3000` didokumentasikan sengaja di `.env.example` — bukan bug).
+- `README.md` sekarang jadi tempat checklist setup manual yang butuh akses dashboard (push `main`, sambungkan Vercel, cek Production Branch, branch protection, env vars, Analytics, Search Console/Bing) — jangan duplikasi checklist itu di sini, itu sumber kebenarannya.
+
+### 7.5 Penambahan dari commit "marketing side" (2026-08-05)
+
+Commit ini yang memicu review — hasilnya: **konsisten dengan tema**, tidak melenceng. Ringkasan (detail lengkap ada di histori percakapan/PR):
+
+- `Testimonials` dan `WhoFor`: section baru, pakai ulang token & motif desain yang sama (`CarvedText`, `MeanderRule`, warna & font yang sudah ada) — bukan pola visual baru.
+- `ProfilePhoto` dan `VideoIntro`: placeholder graceful-degrade — render `null` sampai file di `public/images/profile.jpg` / `public/videos/intro.mp4` benar-benar ada. Tidak menambah dependency, tidak menambah build step.
+- Baris positioning baru di hero ("Systems where a wrong number is someone's paycheck...") memperkuat positioning presisi/stakes, bukan menariknya ke arah copy marketing generik.
+- Komentar `TODO(business-impact)` ditambah di 3 file case study — sengaja belum diisi angka palsu, menunggu angka nyata.
+
+### 7.6 SEO/discoverability tambahan di luar brief
+
+- `public/llms.txt` — ringkasan situs untuk AI crawler/LLM, tidak ada di brief awal.
+- JSON-LD `Person` schema + `hreflang` alternates (`app/[locale]/layout.tsx`) untuk dua bahasa.
+- `app/[locale]/opengraph-image.tsx`, `app/sitemap.ts`, `app/robots.ts` — semua locale-aware.
