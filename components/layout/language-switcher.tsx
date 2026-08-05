@@ -58,6 +58,13 @@ export function LanguageSwitcher({
               hrefLang={LOCALE_HREFLANG[target]}
               aria-current={isActive ? "true" : undefined}
               onClick={() => persistChoice(target)}
+              // Next prefetches this link on mount, while the cookie still
+              // reflects the *current* locale — middleware redirects that
+              // prefetch straight back to the current page, and the router
+              // caches the redirect. Without disabling prefetch, the click
+              // above updates the cookie too late to matter: it reuses the
+              // stale cached redirect instead of issuing a fresh request.
+              prefetch={false}
               className={
                 isActive
                   ? "text-accent"
