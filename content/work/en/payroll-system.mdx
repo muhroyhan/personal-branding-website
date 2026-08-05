@@ -1,0 +1,215 @@
+---
+title: "Payroll for 800+ Employees"
+slug: "payroll-system"
+summary: "A payroll engine where every figure has to be re-derivable from its inputs — Indonesian tax and social-security rules, idempotent runs, and an audit trail across ten entities."
+tech: ["NestJS", "TypeScript", "MySQL", "AWS SQS", "React.js", "Docker"]
+date: "2026-06-01"
+period: "2024 — 2026 · Team Lead"
+featured: true
+---
+
+| | |
+|---|---|
+| **Role** | Team Lead — architecture, implementation, client scoping |
+| **Scale** | 800+ employees, shipped to production June 2026 |
+| **Domain** | PPh 21 (TER method), BPJS, PP 58/2023 |
+| **Stack** | NestJS, MySQL, AWS SQS (LocalStack in dev), React, Docker |
+| **Team** | 2 projects, 2 engineers |
+
+## The constraint
+
+Payroll has no cosmetic bugs. Every other system I'd built failed in ways you
+could apologise for; this one fails as a wage that didn't arrive, on the day
+rent is due, for someone with no way to check my work.
+
+The question was never "how fast can this run" — it was **"can any figure on
+this payslip be explained, six months later, to someone who doesn't trust
+me?"** Three properties follow, and everything below is downstream of them:
+
+1. **Re-derivable.** Every number traceable back to the inputs that produced it.
+2. **Idempotent.** Running the same payroll twice must not pay anyone twice.
+3. **Explainable without me.** The system had to survive my handover.
+
+## Where it started
+
+In 2024 I built a payroll system for our own company — small, internal,
+forgiving. It ran correctly for a year. When a client needed the same problem
+solved at 800+ employees, that year of quiet was the argument for extending it
+rather than starting over. What shipped in June 2026 is an inheritance, not a
+rewrite.
+
+The scale jump is what changed the engineering: at 40 employees you can
+eyeball a payroll run. At 800 you can't, so the system has to justify itself.
+
+## Decisions
+
+### Scope resolution: one rule, five levels
+
+Compensation rules aren't flat. A meal allowance might be set for everyone,
+overridden for a division, overridden again for one position, and overridden
+a final time for an employee who negotiated it.
+
+Modelling that per rule type means re-implementing override logic every time a
+component is added. Instead, one **scope resolution engine**, fixed priority:
+
+```
+employee > division > department > position > employment type
+```
+
+Every compensation component resolves through the same ladder. Adding a
+component becomes a data change, not a code change — and the resolution order
+is one thing to explain, not one per rule.
+
+**Trade-off:** resolution costs a lookup chain instead of a single read, paid
+once per employee per run. I took it because the alternative was override
+logic scattered across the codebase — exactly the class of bug no single-file
+read ever catches.
+
+### Attendance is derived, not entered
+
+The messiest part of the system is the one nobody expects: deciding whether a
+person worked today. Nobody types that in — it's derived from fingerprint
+machine exports, and the raw punches don't answer the question alone.
+
+| Hours vs. shift timetable | With approved permission | Without |
+|---|---|---|
+| Short | Pro-rated pay | No pay |
+| Met or exceeded | Full pay | Full pay |
+
+Then the calendar interferes:
+
+- A **national holiday** counts as a working day for salaried staff, not for
+  daily-wage staff.
+- A **collective leave day** (*cuti bersama*) pays the daily-wage employee in
+  full if annual leave remains to deduct from — otherwise it doesn't.
+- Clocking in on a holiday under an **overtime timetable** pays overtime, not
+  the daily wage — the day was never a working day for that employee to begin
+  with.
+- The **top four job levels are exempt from all of it**; their pay never
+  depends on a fingerprint.
+
+None of that is a formula — it's a matrix of employment type × leave balance ×
+timetable × holiday type, and it's where payroll systems quietly lose people's
+money. I didn't simplify it, because it isn't complex, it's *detailed* — those
+are different problems, and simplifying detail means deciding whose edge case
+doesn't matter. Each branch stayed explicit and named, so a disputed day
+traces back to the specific rule that produced it.
+
+### Idempotency, because retries are not optional
+
+A run touches hundreds of records over minutes — long enough for a connection
+to drop, a worker to restart, an operator to click twice. Every one of those
+ends the same way: the operation gets retried.
+
+- **Payroll runs and cash advances (*kasbon*) are idempotent** — a repeated
+  request resolves to the same result, not a second payment.
+- Runs are driven by an explicit **state machine**, not a boolean flag, so a
+  run that died halfway is in a state the system can name and resume — not an
+  ambiguous one an engineer reasons about at 2am.
+- Processing is chunked through **AWS SQS** (mirrored locally with
+  **LocalStack**, so the queue contract is identical in dev and prod). At
+  800+ employees, one synchronous transaction is both a timeout risk and an
+  all-or-nothing failure; chunking makes progress durable and failures local.
+- Failure is per employee, not per run. A failed payslip retries automatically;
+  re-running the batch regenerates **only** the employees still failed. Without
+  that, recovering from three bad payslips means re-processing 800 people.
+
+I also found and fixed a race condition where two concurrent cash-advance
+requests could both pass a balance check before either committed — the kind of
+bug that never shows up in testing and always shows up in production.
+
+### The upstream nobody owns
+
+Incentives are earned against production output in a separate ERP — machine
+productivity, tonnage, waste, delivery accuracy. That data isn't mine, doesn't
+arrive on request, and isn't always correct.
+
+So it's pulled on a schedule into a staging table ahead of the payroll window,
+not fetched mid-run. A run never blocks on a third party being awake; bad
+upstream data is visible **before** it becomes a payslip and can be re-pulled
+without touching payroll; the link between a figure and the record it came
+from survives, so it can still be explained later. Rates themselves are a
+lookup, not a calculation — a result maps into a banded tariff table, so
+renegotiating a rate is a data change, not a ticket for me.
+
+### Nothing becomes real before a human can review it
+
+Two things are irreversible in practice: a posted payroll run, and the annual
+religious-holiday allowance (*THR*) — a legally mandated payment calculated
+across a twelve-month window. Both get a review step ahead of the commit.
+
+THR computes into its own summary that finance reviews and signs off *before*
+it reaches a payslip. A payroll run is gated on prerequisites the system checks
+itself — attendance complete, upstream data pulled, leave and overtime and
+sanction letters approved. That used to be tribal knowledge held by whoever
+ran payroll last month; now it's a checklist the system evaluates and shows.
+
+What this prevents is specific and expensive: a run that completes
+successfully against incomplete inputs. Nothing errors — the numbers are just
+wrong, and nobody knows until people are paid.
+
+### Regulation as seeded data, not code
+
+The system implements **PPh 21** income tax (TER method), **BPJS**
+contributions, and **PP 58/2023**. Tax rules change, and hard-coding rates
+guarantees a deploy every time the government revises one — a bad instrument
+for a change an accountant, not an engineer, is qualified to make.
+
+So the constants are **admin-editable, seeded with official values**. The
+engineer owns the calculation logic; finance owns the numbers. The audit trail
+records who changed which constant and when — the part that makes this
+division of labour safe rather than merely convenient.
+
+### Two fixes worth naming
+
+Both surfaced from testing against real data, not from a spec:
+
+- **Negative take-home pay is rejected, not written.** Deductions could, in
+  combination, exceed gross pay — arithmetically valid, institutionally
+  absurd. The run refuses and surfaces the case for a human.
+- **Proration runs on working days, not calendar days.** Calendar-day
+  proration quietly underpays anyone starting mid-month in a stretch with
+  weekends stacked at the front.
+
+### Security
+
+The system holds salaries and national IDs, so it went through a dedicated
+hardening pass:
+
+| Control | What it prevents |
+|---|---|
+| Row-level visibility by job rank | An HR admin sees peers and below, not above — page access isn't the right question, row access is |
+| Immutability on posted runs | A completed run is historical fact; the app can't edit history |
+| JWT revocation on termination | A terminated employee's session dies immediately, not at token expiry |
+| Rate limiting | On authentication and export endpoints |
+
+One bug worth naming on its own: a `passwordHash` leak through an eager-loaded
+association — a user relation serialised whole into an unrelated API response.
+Found by reading responses rather than reading code, which is the only way
+that class of leak gets found.
+
+### Audit trail across ten entities
+
+Rather than per-feature logging, one **generic mechanism across ten
+entities** — one schema, one place to look, every mutation recorded with
+actor, timestamp, before and after. This is the piece that makes
+"re-derivable" true rather than aspirational: a disputed figure walks back to
+the inputs and decisions that produced it, without anyone needing to remember.
+
+## Result
+
+- Shipped **June 2026**, running in production for **800+ employees**.
+- Still maintained by me — for a payroll system, its own verdict: a bad one
+  doesn't get replaced quietly, it gets replaced *loudly*.
+- The 2024 internal system remains the architectural base, now serving more
+  than one client project.
+- Delivered while leading two projects and two engineers, scoping requirements
+  directly with the client.
+
+## What I would do differently
+
+The scope resolution engine is the right abstraction, but I built it before a
+second consumer existed — guessing at the hierarchy rather than deriving it.
+It happened to be right. Next time I'd take the duplication for one more
+cycle and let two real cases argue for the shape, instead of one plus an
+assumption.

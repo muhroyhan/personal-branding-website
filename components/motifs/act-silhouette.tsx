@@ -51,7 +51,7 @@ function ColumnArt() {
   );
 }
 
-/** Greek balance — Act II: "a misplaced figure is somebody's balance". */
+/** Greek balance — Act II: "a misplaced figure is somebody's debt". */
 function BalanceArt({ progress }: { progress: MotionValue<number> }) {
   // The beam tips through level as the section crosses the viewport, so the
   // scale reads as still settling rather than decorative.

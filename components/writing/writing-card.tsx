@@ -1,10 +1,11 @@
 import Link from "next/link";
 import type { WritingListItem } from "@/types/writing";
+import { localePath, type Locale } from "@/lib/i18n";
 
-export function WritingCard({ item }: { item: WritingListItem }) {
+export function WritingCard({ item, locale }: { item: WritingListItem; locale: Locale }) {
   return (
     <Link
-      href={`/writing/${item.slug}`}
+      href={localePath(locale, `/writing/${item.slug}`)}
       className="group flex flex-col gap-4 rounded-lg border border-border-strong bg-card p-6 transition-all duration-200 hover:border-accent hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/20"
     >
       <div>

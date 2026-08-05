@@ -1,0 +1,73 @@
+---
+title: "You Don't Control What You Inherit"
+slug: "inheriting-code"
+summary: "A year spent maintaining other people's systems taught me the only useful question to ask about legacy code — and it isn't whether it should be rewritten."
+tags: ["legacy", "systems-thinking", "stoicism"]
+date: "2026-07-15"
+---
+
+In 2023 I was promoted to Team Lead, and the team I got was maintenance. Not
+the lead building new systems. Not the one running the flagship project. The
+one who keeps everything already shipped still running.
+
+Most of that year was spent inside decisions I had not made, in code I could
+not rewrite, against timelines I did not set.
+
+## The rewrite question is the wrong one
+
+The reflex, when handed a system you find unpleasant, is to ask whether it
+should be rewritten. It's a satisfying question because it puts you back in
+control — but it's usually unanswerable and almost always academic. You rarely
+have the mandate, and if you did, you would be volunteering to spend a year
+reproducing behaviour nobody has written down.
+
+The Stoics drew a line between what is *up to us* and what is not, and argued
+that almost all wasted effort comes from misfiling something into the wrong
+column. Legacy code is the clearest case of this in software.
+
+What's not up to you:
+
+- the decisions already made
+- the deadline the original team worked against
+- the requirements that were true then and are baffling now
+
+What is:
+
+- whether the next person understands it faster than you did
+
+That's it. That's the whole list. And it turns out to be enough.
+
+## What that changes in practice
+
+Once you accept that the structure isn't yours to fix wholesale, the work
+reorganises itself around a smaller and much more tractable question: **is this
+system more explainable than it was last month?**
+
+That question has cheap answers available every single week:
+
+- A function named for what it does instead of when it was added.
+- A comment recording *why* a condition exists, above a condition whose
+  existence has confused three people.
+- A test that pins down behaviour someone was afraid to touch.
+- A boundary drawn where the next team will actually need to cut.
+
+None of these are rewrites. All of them are permanent.
+
+## The uncomfortable part
+
+There is a reason nobody puts this year in a portfolio. It produces no launch,
+no screenshot, no metric that goes up and to the right. The output is negative
+space — the incidents that didn't happen, the onboarding that took two days
+instead of two weeks.
+
+But it's the year that taught me the constraint I've designed against ever
+since: **code you hand to someone else has to explain itself without you in
+the room.**
+
+I learned that first from the receiving end, which is the only side that
+teaches it honestly. Every system I've built since — most of all the
+[payroll engine](/work/payroll-system), where every figure has to be
+re-derivable from its inputs — is an attempt to be a better ancestor than the
+ones I inherited from.
+
+You don't control what you inherit. You control what you bequeath.

@@ -1,0 +1,138 @@
+---
+title: "Sistem Kredit Karyawan untuk Bank Perkreditan Rakyat"
+slug: "core-banking-bpr"
+summary: "Proyek pertama yang saya pegang penuh, dari commit pertama sampai serah terima. Tiga portal, alur approval berjenjang, dan output akhirnya bukan layar — tapi PKS yang ditandatangani."
+tech: ["Node.js", "Express.js", "Sequelize.js", "MySQL", "React.js"]
+date: "2022-11-01"
+period: "2022 · Senior Software Engineer"
+featured: true
+---
+
+## Ringkasan
+
+| | |
+|---|---|
+| **Peran** | Senior Software Engineer — pemegang proyek penuh |
+| **Lingkup** | Commit pertama sampai serah terima ke tim lain |
+| **Domain** | Kredit karyawan lewat BPR — pengajuan, approval, penerbitan PKS |
+| **Arsitektur** | Multi-tenant, 3 portal: Admin BPR, HRD perusahaan, debitor |
+| **Stack** | Node.js, Express.js, Sequelize, MySQL, React |
+
+## Masalahnya
+
+Tahun 2022 saya pegang sistem kredit untuk Bank Perkreditan Rakyat, dari commit
+pertama sampai serah terima. Proyek pertama yang saya kerjakan sendiri dari
+awal, di bidang yang tidak menoleransi kesalahan sekecil apa pun.
+
+Produknya kredit karyawan: perusahaan bekerja sama dengan BPR, karyawannya
+mengajukan kredit dengan jaminan gaji, HRD memverifikasi pemohon, BPR yang
+memutuskan. Tiga pihak, tiga portal, satu sistem.
+
+Di sistem perbankan tidak ada bug yang sifatnya cuma tampilan. Angka yang salah
+itu utang seseorang, dan yang menanggungnya tahu lebih dulu daripada kita.
+
+## Yang sebenarnya dihasilkan sistem ini
+
+Kebanyakan sistem menghasilkan layar. Yang ini menghasilkan **perjanjian**.
+
+Di ujung pengajuan yang disetujui, sistem menerbitkan **PKS**: perjanjian
+antara bank, perusahaan, dan debitor, berisi pokok pinjaman, jangka waktu,
+angsuran, bunga, dan biaya. Dokumen itu yang ditandatangani orang. Semua
+proses sebelumnya ada untuk memastikan isinya benar.
+
+**Ketentuan komersial itu data per tenant, bukan kode.** Tiap perusahaan mitra
+didaftarkan dengan tabel bunga dan skema biayanya sendiri. Kalau di-*hardcode*,
+tiap mitra baru berarti deploy ulang — dan lebih buruk, terbuka satu kelas bug
+di mana angka di layar dan angka di perjanjian bisa berbeda.
+
+**Penolakan final dan senyap.** Pengajuan yang ditolak HRD tidak pernah sampai
+ke antrean BPR. Satu baris logika, tapi itu yang membedakan analis bank yang
+menilai pengajuan hidup dengan analis yang menyisir kasus yang sudah mati.
+
+## Alur approval
+
+```
+debitor mengajukan
+  → HRD perusahaan setuju / tolak      (tolak → berhenti)
+  → BPR review, bisa ubah nilai, setuju / tolak
+  → debitor dapat notifikasi WA, konfirmasi / batal
+  → debitor mengisi rekening bank
+  → PKS terbit
+```
+
+Tiap tahap milik pihak berbeda, dengan kewenangan berbeda:
+
+| Pihak | Bisa ubah nilai | Bisa hentikan proses |
+|---|---|---|
+| Perusahaan (HRD) | — | Tolak saja |
+| BPR | Nilai pengajuan, biaya asuransi | Setuju / tolak |
+| Debitor | — | Batal setelah disetujui |
+
+Debitor membatalkan setelah disetujui itu hasil yang sah, bukan error — kredit
+disetujui tidak sama dengan kredit diambil. Notifikasi di titik persetujuan
+lewat WhatsApp, karena debitornya karyawan pabrik atau kantor yang tidak
+sedang duduk menunggu di portal.
+
+## Yang membentuk desainnya
+
+Pekerjaan teknisnya biasa saja: portal multi-tenant, hak akses berjenjang,
+unggah dokumen KYC, approval, ekspor. Yang tidak biasa itu bagian akhirnya —
+sistem ini akan diserahkan ke tim lain, dan saya tidak akan ada di sana untuk
+menjelaskannya.
+
+Pertanyaannya berhenti di "apakah ini sudah benar" dan berubah jadi
+**"apakah ini benar dengan cara yang bisa diperiksa orang lain, tanpa saya?"**
+
+- **Jelas dulu, baru ringkas.** Setiap kali versi ringkas dan versi jelas
+  bertentangan, saya ambil yang jelas. Kode yang pintar itu utang, dan yang
+  membayarnya waktu orang lain.
+- **Istilah domain dipakai apa adanya di kode.** Nama tabel dan service sama
+  dengan istilah staf bank sehari-hari: *debitor*, *angsuran*, *PKS*. Orang
+  yang belum kenal codebase tapi paham operasional bank tetap bisa menavigasinya.
+- **Batas modul digambar di garis serah terima.** Modul dipisah mengikuti
+  bagian yang bisa diambil alih tim baru satu per satu: admin bank, admin
+  perusahaan, debitor. Bukan yang paling enak buat saya waktu jadi satu-satunya
+  yang menulis.
+
+Hak akses diperlakukan sama: admin bank diberi izin *read* / *write* per
+fitur, bukan per paket peran, dan sistem menolak menghapus admin terakhir yang
+tersisa. Model izin yang bisa mengunci semua manusia dari konsolnya sendiri
+bukan fitur keamanan.
+
+## Pelajarannya
+
+Serah terimanya mengajari saya lebih banyak daripada proses membangunnya.
+
+Kode yang kita lepas ke orang lain harus bisa menjelaskan dirinya sendiri,
+tanpa kita di ruangan. Begitu itu dianggap serius, ini berhenti jadi urusan
+dokumentasi dan berubah jadi urusan arsitektur. Strukturnya membuat alasannya
+kelihatan, atau tidak sama sekali. Tidak ada README yang bisa menyelamatkan
+struktur yang tidak.
+
+Semua sistem yang saya rancang setelah itu dibangun dengan batasan yang sama,
+termasuk [engine payroll](/id/work/payroll-system) dua tahun kemudian. Syarat
+bahwa setiap angka harus bisa dilacak sampai ke sumbernya itu ide yang sama
+persis, cuma di bidang yang taruhannya bikin syarat itu tidak bisa ditawar.
+
+## Hasil
+
+- Rilis dan serah terima ke tim maintenance terpisah, 2022.
+- Proyek pertama yang saya pegang dari commit pertama sampai serah terima, di
+  level Senior Software Engineer.
+- Multi-tenant sejak desain: tiap perusahaan mitra punya jalur portalnya
+  sendiri, konfigurasi bunga dan biayanya sendiri, dan basis debitornya sendiri.
+- Menetapkan batasan desain yang jadi dasar semua pekerjaan saya berikutnya:
+  *bisa dijelaskan setelah diserahkan*.
+
+## Yang akan saya lakukan berbeda
+
+Status pelunasan kredit dibiarkan sebagai perubahan manual oleh admin bank.
+Waktu itu keputusan tersebut jujur: pembayaran terjadi lewat potong gaji di
+luar sistem, jadi sistemnya memang tidak tahu. Tapi "nanti ada orang yang ingat
+mengklik ini" itu tetap sebuah keputusan desain, bukan ketiadaan keputusan. Dan
+saya mencatatnya sebagai keterbatasan, bukan menyelesaikannya.
+
+Versi yang saya bangun sekarang tetap tidak akan menebak pelunasan. Bedanya, ia
+akan membuat celahnya kelihatan: menandai kredit yang jangka waktunya sudah
+lewat sementara statusnya belum berubah. Supaya langkah manual itu diingatkan
+sistem, bukan diingat orang.

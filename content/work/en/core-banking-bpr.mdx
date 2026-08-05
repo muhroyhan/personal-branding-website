@@ -1,0 +1,136 @@
+---
+title: "Employee Credit System for a Rural Credit Bank"
+slug: "core-banking-bpr"
+summary: "My first project owned end to end — first commit through to handover — in a domain where a misplaced figure is somebody's debt and the system's output is a signed contract."
+tech: ["Node.js", "Express.js", "Sequelize.js", "MySQL", "React.js"]
+date: "2022-11-01"
+period: "2022 · Senior Software Engineer"
+featured: true
+---
+
+| | |
+|---|---|
+| **Role** | Senior Software Engineer — sole owner, first commit to handover |
+| **Scope** | Employee credit — application, approval, generated agreement |
+| **Architecture** | Multi-tenant, 3 portals: bank admin, employer HR, borrower |
+| **Stack** | Node.js, Express.js, Sequelize, MySQL, React |
+
+## The constraint
+
+In 2022 I took a credit system for a *Bank Perkreditan Rakyat* — an Indonesian
+rural credit bank — from first commit through to handover. First project I
+owned end to end, and the least forgiving domain I had worked in.
+
+The product is employee lending: a company partners with the bank, its staff
+apply for credit against their salary, the company's HR verifies the
+applicant, the bank underwrites and approves. Three parties, three portals,
+one system.
+
+Banking software has no cosmetic bugs. A misplaced figure is somebody's debt,
+and the person it belongs to finds out before you do.
+
+## What the system actually produces
+
+Most systems output a screen. This one outputs a **contract**.
+
+At the end of a successful application, the system generates the *PKS* — the
+credit agreement between bank, employer and borrower, carrying the principal,
+tenor, monthly instalment, interest, and fees. That document is the thing
+people sign. Everything upstream exists to make sure it's right.
+
+**The commercial terms are per-tenant data, not code.** Each partner company
+is onboarded with its own interest table by tenor and its own fee schedule.
+Hard-coding a rate would mean a deploy every time the bank negotiates a new
+partner — and worse, a class of bug where the number on screen and the number
+in the contract disagree.
+
+**Rejection is terminal and quiet.** An application rejected by the employer
+never reaches the bank's queue. One line of logic, and the difference between
+an underwriter reviewing live applications versus wading through cases the
+employer already killed.
+
+## The approval chain
+
+```
+borrower applies
+  → employer's HR approves or rejects   (reject → terminal)
+  → bank reviews, may adjust terms, approves or rejects
+  → borrower notified, confirms or walks away
+  → borrower supplies bank account
+  → agreement (PKS) generated
+```
+
+Each stage belongs to a different party, with different authority:
+
+| Party | Can amend terms | Can end the process |
+|---|---|---|
+| Employer (HR) | — | Reject only |
+| Bank | Amount, insurance cost | Approve or reject |
+| Borrower | — | Decline after approval |
+
+A borrower declining after approval is a legitimate outcome, not an error
+state — approving credit isn't the same as taking it. Notification at the
+approval step goes over WhatsApp, because the borrower is a factory or office
+employee who isn't sitting in the portal waiting.
+
+## What actually shaped the design
+
+The technical work was ordinary: multi-tenant portals, role-scoped access,
+KYC document capture, approvals, exports. What wasn't ordinary was the ending —
+this system was going to be handed to another team, and I wasn't going to be
+there to explain it.
+
+The question stopped being "is this correct?" and became **"is this correct in
+a way the next person can verify without me?"**
+
+- **Explicit over clever.** Where a concise expression and an obvious one
+  disagreed, I took the obvious one. Cleverness is a loan against someone
+  else's time.
+- **Domain language in the code.** Schema and service names match what bank
+  staff actually say — *debitor*, *angsuran*, *PKS*. A maintainer who doesn't
+  know the codebase but knows the domain can still navigate it.
+- **Boundaries where the handover would cut.** Modules split along lines a new
+  team could take one at a time — bank admin, employer admin, borrower — not
+  along whatever was convenient while I was the only one writing.
+
+Access control got the same treatment: bank administrators are granted
+read/write per feature rather than by role bundle, and the system refuses to
+delete the last remaining administrator. A permission model that can lock
+every human out of the bank's own console isn't a security feature.
+
+## What it taught
+
+The handover taught me more than the build did.
+
+Code you hand to someone else has to explain itself without you in the room.
+Once you take that seriously, it stops being a documentation problem and
+becomes an architecture problem — the structure either makes the reasoning
+visible or it does not, and no README rescues one that does not.
+
+Every system I have designed since has been built against that constraint,
+including the [payroll engine](/work/payroll-system) two years later. The
+requirement that every figure be re-derivable from its inputs is the same idea,
+stated in a domain where the stakes made it non-negotiable.
+
+## Result
+
+- Delivered and handed over to a separate maintenance team in 2022.
+- First project I owned from first commit to handover, at Senior Software
+  Engineer level.
+- Multi-tenant by design: each partner employer runs on its own portal path,
+  its own interest and fee configuration, and its own borrower pool.
+- Established the design constraint — *explainable after handover* — that the
+  rest of my work has been built on.
+
+## What I would do differently
+
+Loan settlement was left as a manual status change by a bank administrator. At
+the time that was the honest choice — repayment happens through payroll
+deduction outside the system, so the system genuinely does not know. But
+"a human will remember to click this" is a design decision, not the absence of
+one, and I documented it as a limitation rather than solving it.
+
+The version I would build now still would not guess at settlement. It would
+make the gap visible — flag loans whose scheduled term has elapsed while the
+status has not moved — so that the manual step is prompted by the system rather
+than remembered by a person.

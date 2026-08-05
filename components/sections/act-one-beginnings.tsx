@@ -1,25 +1,33 @@
-import { ACT_ONE_PARAGRAPHS, STORY_ACTS } from "@/lib/constants";
+import { ACT_ANCHORS, ACT_NUMERALS } from "@/lib/constants";
+import type { Dictionary } from "@/lib/i18n";
 import { ActHeading } from "@/components/story/act-heading";
 import { LiveBlueprint } from "@/components/motifs/live-blueprint";
 import { ActSilhouette } from "@/components/motifs/act-silhouette";
 
-const ACT = STORY_ACTS[0];
+export function ActOneBeginnings({ dict }: { dict: Dictionary }) {
+  const act = dict.acts.beginnings;
 
-export function ActOneBeginnings() {
   return (
     <section
-      id={ACT.id}
+      id={ACT_ANCHORS.beginnings}
       className="relative isolate overflow-hidden border-b border-border px-6 py-16 sm:py-20 lg:py-28"
     >
       <LiveBlueprint id="act-one" />
       <ActSilhouette variant="column" />
 
       <div className="mx-auto max-w-2xl">
-        <ActHeading act={ACT} />
+        <ActHeading
+          numeral={ACT_NUMERALS.beginnings}
+          year={act.year}
+          role={act.role}
+          title={act.title}
+        />
         <div className="flex flex-col gap-5">
-          <p className="text-body leading-relaxed text-fg">{ACT_ONE_PARAGRAPHS[0]}</p>
-          <p className="text-body leading-relaxed text-fg">{ACT_ONE_PARAGRAPHS[1]}</p>
-          <p className="text-body leading-relaxed text-fg">{ACT_ONE_PARAGRAPHS[2]}</p>
+          {act.paragraphs.map((paragraph, index) => (
+            <p key={index} className="text-body leading-relaxed text-fg">
+              {paragraph}
+            </p>
+          ))}
         </div>
       </div>
     </section>

@@ -1,20 +1,48 @@
 # Muhammad Royhan
 
-> Tech Lead / Senior Software Engineer with 7+ years of experience building
-> scalable web applications and leading engineering teams. Focused on
-> backend architecture that has to be correct under real-world constraints —
-> idempotency, auditability, and regulatory correctness — not just feature
-> delivery.
+> Senior Fullstack Engineer and Team Lead — seven years and three promotions at
+> one company. Backend and frontend, with a focus on systems that have to be
+> correct under real-world constraints: idempotency, auditability, and
+> regulatory correctness, not just feature delivery.
 
-This site is a personal portfolio: career background, a career timeline,
-and case studies of production systems built and shipped.
+Available in two languages. English (`/`) is written for an international
+audience and carries the long-form narrative; Indonesian (`/id`) is a shorter,
+fact-first register written for Indonesian hiring practice — not a translation
+of the English text.
+
+## Background
+
+- 2019 — Junior Software Engineer. ERP build and an inherited rental marketplace.
+- 2022 — Senior Software Engineer. Employee credit system for a rural credit
+  bank (BPR), owned from first commit through to handover.
+- 2023 — Team Lead, legacy maintenance across already-shipped systems.
+- 2024–2026 — Team Lead. Payroll system: internal in 2024, extended for a client
+  at 800+ employees, shipped June 2026 and still maintained.
 
 ## Pages
 
-- [Home](/): hero, about, career timeline, tech stack, and contact links.
-- [Work](/work): full list of case studies.
+- [Home](/) · [Beranda](/id): five-act career narrative, tech stack, contact.
+- [Work](/work) · [Proyek](/id/work): case studies of production systems.
+- [Payroll system](/work/payroll-system): flagship case study — scope
+  resolution engine, idempotent payroll runs, PPh 21 TER / BPJS / PP 58/2023,
+  generic audit trail across ten entities.
+- [Employee credit, BPR](/work/core-banking-bpr): first end-to-end ownership;
+  multi-tenant lending portals for bank, employer and borrower, ending in a
+  generated credit agreement; design driven by the handover constraint.
+- [Rental marketplace](/work/rental-marketplace): inherited mid-build;
+  time-driven order state machine, two courier integrations behind one status
+  model, promo refund logic for partial cancellation.
+- [Writing](/writing) · [Tulisan](/id/writing): essays connecting systems
+  thinking and Stoic philosophy to engineering decisions.
+- [Resume (PDF)](/royhan-resume.pdf)
+
+## Stack
+
+React.js, Next.js, Flutter, TypeScript, Node.js, Express.js, NestJS,
+Sequelize.js, MySQL, AWS SQS, Docker.
 
 ## Contact
 
+- Email: muhroyhan@gmail.com
 - LinkedIn: https://www.linkedin.com/in/muhammad-royhan-077830168
 - GitHub: https://github.com/muhroyhan

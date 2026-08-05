@@ -1,14 +1,13 @@
 "use client";
 
 import { Fragment } from "react";
+import Link from "next/link";
 import { motion, type Variants } from "motion/react";
 import { Term } from "@/components/ui/term-tooltip";
 import { LiveBlueprint } from "@/components/motifs/live-blueprint";
 import { MeanderRule } from "@/components/motifs/meander-rule";
-
-const HEADLINE = "Competition kept me out. Obligation kept me in.";
-
-const HEADLINE_WORDS = HEADLINE.split(" ");
+import { ACT_ANCHORS, RESUME_PATH } from "@/lib/constants";
+import { localePath, type Dictionary, type Locale } from "@/lib/i18n";
 
 const container: Variants = {
   hidden: {},
@@ -32,30 +31,43 @@ const word: Variants = {
   },
 };
 
+const CTA_CLASS =
+  "inline-flex items-center gap-2 rounded-md border px-5 py-2.5 font-mono text-caption tracking-wide uppercase transition-all duration-150 active:scale-95";
+
 // MotionConfig (root layout) sets reducedMotion="user", which automatically
 // snaps transform-based transitions (y, scaleX) to their end state for
 // prefers-reduced-motion users while still letting opacity fade — so the
 // mount animation below stays a single source of truth for both cases,
 // and SSR/CSR markup never has to fork on the media query.
-export function Hero() {
+export function Hero({ locale, dict }: { locale: Locale; dict: Dictionary }) {
+  const t = dict.hero;
+  const headlineWords = t.headline.split(" ");
+
   return (
     <section
       id="hero"
-      className="relative isolate flex min-h-[75svh] flex-col items-center justify-center gap-6 overflow-hidden border-b border-border px-6 py-16 text-center sm:min-h-[85svh] sm:gap-8"
+      className="relative isolate flex min-h-[75svh] flex-col items-center justify-center gap-6 overflow-hidden border-b border-border px-6 py-16 text-center sm:min-h-[85svh] sm:gap-7"
     >
       <LiveBlueprint id="hero" />
 
-      {/* Byline: the page <title> is deliberately the philosophical line, not
-          this name — so the name still needs to land somewhere a recruiter
-          sees it in the first second, before the headline does its work. */}
-      <motion.p
+      {/* Identity block, ahead of the headline by design. The headline is the
+          reason to keep reading; this is the reason a recruiter who gives the
+          page four seconds still leaves knowing the role and the seniority.
+          Before this existed, "Senior Fullstack Engineer" was the fourth
+          element down and read as a caption. */}
+      <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.05 }}
-        className="font-mono text-caption tracking-wide text-muted-foreground uppercase"
+        className="flex flex-col items-center gap-1.5"
       >
-        Muhammad Royhan
-      </motion.p>
+        <p className="font-mono text-caption tracking-wide text-muted-foreground uppercase">
+          {t.name}
+        </p>
+        <p className="font-mono text-caption tracking-wide text-accent uppercase">
+          {t.role}
+        </p>
+      </motion.div>
 
       <motion.h1
         variants={container}
@@ -63,12 +75,12 @@ export function Hero() {
         animate="show"
         className="max-w-3xl font-display text-4xl font-semibold text-fg sm:text-h1"
       >
-        {HEADLINE_WORDS.map((w, i) => (
+        {headlineWords.map((w, i) => (
           <Fragment key={i}>
             <motion.span variants={word} className="inline-block">
               {w}
             </motion.span>
-            {i < HEADLINE_WORDS.length - 1 ? " " : ""}
+            {i < headlineWords.length - 1 ? " " : ""}
           </Fragment>
         ))}
       </motion.h1>
@@ -88,28 +100,67 @@ export function Hero() {
         transition={{ duration: 0.6, delay: 0.75 }}
         className="max-w-xl text-body text-muted-foreground"
       >
-        Senior Fullstack Engineer — backend and frontend — seven years and three
-        promotions at one company. I lean on{" "}
-        <Term definition="Understanding a system by how its parts affect each other over time, not by inspecting any one part in isolation.">
-          systems thinking
-        </Term>{" "}
-        and a{" "}
-        <Term definition="The Stoic dichotomy of control: spend effort only on what you can actually influence, and design for the rest.">
-          Stoic bias for what&apos;s controllable
-        </Term>{" "}
-        to build software that holds up after I hand it over.
+        {t.leadBefore}
+        <Term definition={t.termOne.definition}>{t.termOne.label}</Term>
+        {t.leadMiddle}
+        <Term definition={t.termTwo.definition}>{t.termTwo.label}</Term>
+        {t.leadAfter}
       </motion.p>
+
+      {/* The résumé PDF has been sitting in `public/` unlinked. A recruiter who
+          wants the one-page version should never have to ask for it. */}
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.85 }}
+        className="flex flex-wrap items-center justify-center gap-3"
+      >
+        <a
+          href={RESUME_PATH}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={`${CTA_CLASS} border-accent bg-accent/10 text-accent hover:bg-accent/20`}
+        >
+          {t.ctaResume}
+        </a>
+        <Link
+          href={localePath(locale, "/#work")}
+          className={`${CTA_CLASS} border-border-strong text-fg hover:border-accent hover:text-accent`}
+        >
+          {t.ctaWork}
+        </Link>
+      </motion.div>
+
+      {/* Four hard facts, scannable without reading a sentence. The five-act
+          story argues for these at length; this is the version that survives a
+          twenty-second skim. */}
+      <motion.ul
+        aria-label={t.proofLabel}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.6, delay: 0.95 }}
+        className="flex max-w-2xl flex-wrap items-center justify-center gap-x-3 gap-y-2 border-t border-border pt-6 font-mono text-caption text-muted-foreground"
+      >
+        {t.proof.map((fact, i) => (
+          <li key={fact} className="flex items-center gap-3">
+            {i > 0 ? (
+              <span aria-hidden className="h-3 w-px bg-border-strong" />
+            ) : null}
+            {fact}
+          </li>
+        ))}
+      </motion.ul>
 
       {/* Open loop: the question this line points at is restated and answered
           in the final act, which is the whole reason to keep scrolling. */}
       <motion.a
-        href="#act-beginnings"
+        href={`#${ACT_ANCHORS.beginnings}`}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ duration: 0.6, delay: 1 }}
-        className="group mt-4 flex flex-col items-center gap-2 font-mono text-caption tracking-wide text-muted-foreground uppercase transition-colors hover:text-accent"
+        transition={{ duration: 0.6, delay: 1.05 }}
+        className="group mt-2 flex flex-col items-center gap-2 font-mono text-caption tracking-wide text-muted-foreground uppercase transition-colors hover:text-accent"
       >
-        Seven years, three promotions, one question I still can&apos;t fully answer
+        {t.scrollCue}
         <span
           aria-hidden
           className="transition-transform duration-300 group-hover:translate-y-1 motion-reduce:transition-none"

@@ -1,0 +1,148 @@
+---
+title: "Marketplace Sewa Barang, Diwariskan di Tengah Jalan"
+slug: "rental-marketplace"
+summary: "Marketplace sewa dua sisi yang saya terima setengah jadi. Order lifecycle 12 status, integrasi 2 kurir pihak ketiga, dan logika refund promo untuk pembatalan sebagian."
+tech: ["Node.js", "Express.js", "Sequelize.js", "React.js", "Redux", "Flutter", "AWS Lambda"]
+date: "2021-12-22"
+period: "2019 — 2021 · Software Engineer"
+featured: false
+---
+
+## Ringkasan
+
+| | |
+|---|---|
+| **Peran** | Software Engineer — maintenance & pengembangan lanjutan |
+| **Lingkup** | Proyek warisan, dilanjutkan 2019–2021 |
+| **Domain** | Marketplace sewa dua sisi (penyewa & vendor) |
+| **Stack** | Express.js, Sequelize, React, Redux, Flutter, AWS Lambda |
+| **Integrasi** | Payment gateway, 2 penyedia kurir, WhatsApp, email, asuransi |
+
+## Masalahnya
+
+Sistem pertama yang saya kerjakan serius dimulai orang lain: marketplace sewa
+dua sisi, penyewa di satu sisi, pemilik barang di sisi lain. Diserahkan ke saya
+di tengah jalan, keputusan sudah diambil, pengguna sudah jalan di produksi.
+
+Tidak bisa ditulis ulang, tidak bisa dihentikan dulu supaya saya paham. Satu
+variabel yang benar-benar saya pegang: apakah sistem ini lebih bisa dijelaskan
+waktu saya lepas, dibanding waktu saya terima.
+
+## Sebagian besar lifecycle-nya adalah kesunyian, bukan klik
+
+Order kelihatan seperti urutan klik: bayar, konfirmasi, kirim, terima,
+kembalikan. Model itu bertahan kira-kira seminggu di produksi.
+
+Lifecycle aslinya punya belasan status, dan **sebagian besar perpindahannya
+bukan klik**. Timeout, webhook, cron job jam 3 pagi. Penyewa yang tidak jadi
+bayar, vendor yang tidak konfirmasi, barang yang tidak dikembalikan — tidak
+satu pun menghasilkan event. Ketiadaan itu sendiri yang jadi event.
+
+### Pembatalan itu jam, bukan tombol
+
+Order bisa mati karena didiamkan di empat titik, dan batas waktunya mengikuti
+janji ke penyewa:
+
+| Jenis booking | Vendor konfirmasi | Vendor kirim |
+|---|---|---|
+| Instant | 1 jam | 1 jam dari waktu mulai sewa |
+| Standard | 24 jam, hanya jam buka toko | 24 jam, hanya jam buka toko |
+| Delay | 24 jam | 24 jam |
+
+Klausa "hanya jam buka toko" yang paling layak ditunjuk. Sepele diimplementasi,
+mustahil ditebak dari dokumen requirement. Aturan yang menghukum vendor karena
+tutup di hari Minggu itu benar secara teknis, salah secara bisnis.
+
+### Dua kurir, satu status internal
+
+Dua penyedia kurir tidak sepakat soal apa itu "pengiriman":
+
+| | Penyedia A | Penyedia B |
+|---|---|---|
+| Kosakata | `Finding Driver → Out For Pickup → Out For Delivery → Completed` | `locating_driver → driver_accept_booking → delivery_in_progress → delivery_completed` |
+
+Keduanya harus mendarat di satu status internal yang sama — penyewa tidak
+perlu tahu vendor pilih kurir yang mana — jadi diterjemahkan di batas
+integrasi. Model order hanya kenal *menunggu pengiriman, dalam pengiriman,
+sedang disewa*.
+
+Jalur gagalnya yang menarik, karena tidak simetris:
+
+- **Kurir cancel, atau driver tidak ditemukan** → tombol "cari driver"
+  aktif lagi. Order mati yang disandera kurir itu tiket support.
+- **Kurir timeout mencari driver** → tim CS mereka mengambil alih manual,
+  tombolnya harus *tetap mati* — kalau diaktifkan, vendor bisa pesan driver
+  kedua untuk order yang sedang ditangani.
+
+Bentuk kejadian sama, respons benarnya berlawanan. Bedanya cuma ketahuan kalau
+kontrak integrasi keduanya benar-benar dibaca.
+
+### Refund promo saat pembatalan sebagian
+
+Tiga barang dalam satu order, promo terpakai karena total gabungannya
+memenuhi minimum, lalu penyewa membatalkan satu barang. Berapa yang direfund?
+
+Refund penuh, sisa ordernya tidak lagi memenuhi minimum syarat diskon. Refund
+dikurangi diskon, pembatalan barang termurah diam-diam menanggung diskon yang
+dihasilkan barang mahal. Tidak ada jawaban benar dari semua sudut — makanya
+mengendap lama sebagai bug yang diketahui.
+
+Yang akhirnya rilis, bukan aturan elegan, tapi aturan eksplisit:
+
+- Promo **tidak** terikat toko/kategori → diskon dibebankan penuh ke barang
+  pertama yang dibatalkan; pembatalan berikutnya direfund penuh.
+- Promo **terikat** toko/kategori → diskon hanya dibebankan ke barang yang
+  memang mendapatkannya.
+- Kalau hasilnya refund minus, saldo platform boleh negatif dan terbawa ke
+  order berikutnya; selama negatif, penyewa tidak bisa menarik dana.
+
+Bukan aturan terbaik. Aturan yang bisa dijelaskan satu kalimat ke tim support,
+dan perilaku sebelumnya tidak bisa.
+
+### Kegagalan diberi jalan pulih, bukan cuma baris log
+
+Sewa lewat jatuh tempo punya polis asuransi yang diperpanjang cron job satu
+hari sekali. Job itu memanggil pihak ketiga, jadi cepat atau lambat pasti
+gagal. Perpanjangan yang gagal muncul **di dashboard admin lengkap tombol
+jalankan ulang** — siapa pun yang menyadari masalahnya sekalian bisa
+membereskannya, tanpa engineer.
+
+Naluri yang sama di penghitung pembatalan vendor: tiga kali gratis per tahun,
+lebih dari itu memaksa verifikasi ulang dan menutup toko sampai admin
+membukanya. Reset tiap 1 Januari, lewat cron. Aturan yang tidak perlu diingat
+siapa pun untuk ditegakkan adalah satu-satunya jenis aturan yang benar-benar
+tegak.
+
+## Pelajarannya
+
+Sistem ini saya warisi, dan beberapa tahun kemudian saya dipromosikan khusus
+untuk mengurus sistem sejenis — kode yang bukan saya tulis, keputusan yang
+bukan saya ambil, tenggat yang bukan saya tentukan.
+
+**Kita jarang mengendalikan apa yang kita warisi. Yang kita kendalikan cuma
+satu: apakah ia lebih bisa dijelaskan waktu kita serahkan.** Peninggalan saya
+yang paling jelas bukan refactor, melainkan manual sistem tertulis: order
+lifecycle, daftar cron job, pemetaan status kurir, matriks notifikasi, daftar
+kode error.
+
+## Hasil
+
+- Merawat dan mengembangkan marketplace ini 2019–2021, setelah menerimanya
+  setengah jadi.
+- Membangun aplikasi mobile Flutter-nya bersama tim.
+- Menulis manual sistem: state machine order, 12 scheduled job, 3 integrasi
+  webhook, matriks notifikasi lengkap email, WhatsApp, push.
+- Merilis logika refund promo yang menutup bug lama pada pembatalan sebagian.
+
+## Yang akan saya lakukan berbeda
+
+Saya memperlakukan scheduled job sebagai tugas berdiri sendiri, karena
+begitulah bentuknya waktu saya terima. Padahal bukan — beberapa adalah
+transisi dalam satu state machine order yang sama, terpecah ke lambda dan
+jadwal berbeda, sehingga menjawab "bagaimana order sampai di status ini"
+berarti membaca lima file.
+
+Sekarang saya akan menuliskan state machine-nya eksplisit di satu tempat, dan
+membiarkan cron job jadi pemicu tipis saja — supaya *apa saja yang bisa
+terjadi pada sebuah order* ada di tempat yang bisa dibaca, bukan tersebar di
+crontab.

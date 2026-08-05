@@ -2,12 +2,11 @@
 
 import { useRef, useState } from "react";
 import { motion, useMotionValueEvent, useScroll } from "motion/react";
-import { ARCHITECTURE_STORY, STORY_ACTS, SYLLOGISM } from "@/lib/constants";
+import { ACT_ANCHORS, ACT_NUMERALS } from "@/lib/constants";
+import { fill, type Dictionary } from "@/lib/i18n";
 import { LiveBlueprint } from "@/components/motifs/live-blueprint";
 import { ActHeading } from "@/components/story/act-heading";
 import { LambdaMark } from "@/components/motifs/lambda-mark";
-
-const ACT = STORY_ACTS[3];
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
@@ -32,7 +31,15 @@ const dotsShownAt = [4, 6, DOT_TOTAL, DOT_TOTAL, DOT_TOTAL];
  * by design, so the "wrong figure" beat is carried by a ring and a scale bump
  * rather than by introducing an alarm colour the rest of the site never uses.
  */
-function StoryDiagram({ step }: { step: number }) {
+function StoryDiagram({
+  step,
+  total,
+  dict,
+}: {
+  step: number;
+  total: number;
+  dict: Dictionary;
+}) {
   const shown = dotsShownAt[step] ?? DOT_TOTAL;
   const flagged = step === 2;
   const verified = step >= 3;
@@ -43,7 +50,10 @@ function StoryDiagram({ step }: { step: number }) {
       viewBox="0 0 340 150"
       className="w-full"
       role="img"
-      aria-label={`Payroll system diagram, stage ${step + 1} of ${ARCHITECTURE_STORY.length}`}
+      aria-label={fill(dict.architecture.diagramLabel, {
+        step: step + 1,
+        total,
+      })}
     >
       {Array.from({ length: DOT_TOTAL }, (_, i) => {
         const cx = DOT_X0 + (i % DOT_COLS) * DOT_GAP;
@@ -104,7 +114,7 @@ function StoryDiagram({ step }: { step: number }) {
           fontSize={9}
           letterSpacing={1.5}
         >
-          PAYROLL RUN
+          {dict.architecture.runLabel}
         </text>
       </g>
 
@@ -148,16 +158,19 @@ function StoryDiagram({ step }: { step: number }) {
           fontSize={9}
           letterSpacing={1.5}
         >
-          RE-DERIVABLE FROM INPUTS
+          {dict.architecture.auditLabel}
         </text>
       </motion.g>
     </svg>
   );
 }
 
-export function ArchitectureStory() {
+export function ArchitectureStory({ dict }: { dict: Dictionary }) {
   const stepsRef = useRef<HTMLOListElement>(null);
   const [step, setStep] = useState(0);
+
+  const act = dict.acts.payroll;
+  const steps = dict.architecture.steps;
 
   const { scrollYProgress } = useScroll({
     target: stepsRef,
@@ -165,27 +178,28 @@ export function ArchitectureStory() {
   });
 
   useMotionValueEvent(scrollYProgress, "change", (progress) => {
-    const next = Math.floor(progress * ARCHITECTURE_STORY.length);
-    setStep(Math.min(ARCHITECTURE_STORY.length - 1, Math.max(0, next)));
+    const next = Math.floor(progress * steps.length);
+    setStep(Math.min(steps.length - 1, Math.max(0, next)));
   });
 
   return (
     // No overflow-hidden here: it would turn this section into a scroll
     // container and stop the sticky diagram below from ever sticking.
     <section
-      id={ACT.id}
+      id={ACT_ANCHORS.payroll}
       className="relative isolate border-b border-border px-6 py-16 sm:py-20 lg:py-28"
     >
       <LiveBlueprint id="act-payroll" />
 
       <div className="mx-auto max-w-5xl">
         <div className="mx-auto mb-10 max-w-2xl sm:mb-16">
-          <ActHeading act={ACT} />
-          <p className="text-body leading-relaxed text-muted-foreground">
-            Two years, two systems, one engineer on each — traded between them
-            whenever one needed to move faster. Scroll through it — the problem
-            earns the solution rather than being told it.
-          </p>
+          <ActHeading
+            numeral={ACT_NUMERALS.payroll}
+            year={act.year}
+            role={act.role}
+            title={act.title}
+          />
+          <p className="text-body leading-relaxed text-muted-foreground">{act.intro}</p>
         </div>
 
         {/*
@@ -202,18 +216,18 @@ export function ArchitectureStory() {
             {/* Capped on mobile so the pinned graphic never eats more than
                 about a fifth of the viewport, leaving the copy room to read. */}
             <div className="mx-auto max-w-72 lg:max-w-none">
-              <StoryDiagram step={step} />
+              <StoryDiagram step={step} total={steps.length} dict={dict} />
             </div>
             <p className="mt-3 text-center font-mono text-caption tracking-wide text-accent uppercase lg:mt-4">
-              {ARCHITECTURE_STORY[step].caption}
+              {steps[step].caption}
             </p>
             <div
               aria-hidden
               className="mx-auto mt-3 flex w-fit items-center gap-1.5 lg:mt-4"
             >
-              {ARCHITECTURE_STORY.map((entry, index) => (
+              {steps.map((entry, index) => (
                 <span
-                  key={entry.id}
+                  key={entry.caption}
                   className={`h-1 rounded-full transition-all duration-300 motion-reduce:transition-none ${
                     index === step ? "w-6 bg-accent" : "w-1.5 bg-border-strong"
                   }`}
@@ -225,9 +239,9 @@ export function ArchitectureStory() {
           {/* svh, not vh: mobile browsers resize the viewport as their chrome
               hides on scroll, which makes vh-based steps jump mid-animation. */}
           <ol ref={stepsRef} className="pt-8 lg:pt-0">
-            {ARCHITECTURE_STORY.map((entry, index) => (
+            {steps.map((entry, index) => (
               <li
-                key={entry.id}
+                key={entry.caption}
                 className="flex min-h-[42svh] flex-col justify-center lg:min-h-[70svh]"
               >
                 <p
@@ -249,18 +263,20 @@ export function ArchitectureStory() {
           <div className="mb-5 flex items-center gap-2">
             <LambdaMark className="text-h4" />
             <p className="font-mono text-caption tracking-wide text-muted-foreground uppercase">
-              Stated formally
+              {dict.architecture.syllogismLabel}
             </p>
           </div>
           <dl className="flex flex-col gap-4">
-            {SYLLOGISM.map((line) => (
+            {dict.architecture.syllogism.map((line) => (
               <div key={line.label}>
                 <dt className="font-mono text-caption tracking-wide text-accent uppercase">
                   {line.label}
                 </dt>
                 <dd
                   className={`mt-1 text-body leading-relaxed ${
-                    line.label === "Conclusion" ? "font-medium text-fg" : "text-muted-foreground"
+                    line.label === dict.architecture.conclusionLabel
+                      ? "font-medium text-fg"
+                      : "text-muted-foreground"
                   }`}
                 >
                   {line.text}
