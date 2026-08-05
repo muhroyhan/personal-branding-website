@@ -65,6 +65,7 @@ export const id: Dictionary = {
   hero: {
     name: "Muhammad Royhan",
     role: "Senior Fullstack Engineer · Team Lead",
+    positioning: "Sistem yang salah angkanya berarti gaji orang tidak sampai — payroll, kredit, compliance.",
     headline: "Tujuh tahun membangun sistem yang tidak boleh salah.",
     leadBefore:
       "Backend dan frontend. Tujuh tahun, tiga promosi, satu perusahaan. Cara kerja saya bertumpu pada ",
@@ -239,6 +240,12 @@ export const id: Dictionary = {
     empty: "Tulisan pertama sedang disiapkan. Silakan mampir lagi.",
   },
 
+  testimonials: {
+    eyebrow: "Kata mereka",
+    heading: "Testimoni",
+    intro: "Singkat, apa adanya, dari orang yang pernah bekerja langsung dengan saya.",
+  },
+
   stack: {
     eyebrow: "Bukti",
     heading: "Tech Stack",
@@ -250,10 +257,29 @@ export const id: Dictionary = {
     },
   },
 
+  whoFor: {
+    eyebrow: "Kecocokan",
+    heading: "Kapan saya cocok direkrut",
+    intro: "Hubungi kalau situasinya salah satu dari ini.",
+    bullets: [
+      "Angka yang salah punya konsekuensi hukum atau finansial. Payroll, kredit, compliance, apa pun yang hasilnya ditandatangani orang.",
+      "Codebase payroll, kredit, atau compliance yang sudah tidak ada lagi yang paham sepenuhnya.",
+      "Tim kehilangan senior engineer yang memegang konteksnya.",
+      "Sistem yang harus lolos audit, atau diserahterimakan ke tim yang tidak ikut membangunnya.",
+    ],
+    availabilityLabel: "Ketersediaan",
+    availability: [
+      "Remote-first",
+      "WIB · UTC+7",
+      "EOR, kontrak, atau full-time",
+      "Notice period 2 minggu",
+    ],
+  },
+
   contact: {
     heading: "Sedang mencari Senior Fullstack Engineer atau Team Lead?",
-    intro:
-      "Saya terbuka untuk peran itu, baik remote, hybrid, maupun on-site. Silakan hubungi langsung, tidak perlu isi form.",
+    intro: "Silakan hubungi langsung, tidak perlu isi form.",
+    videoLabel: "Tonton perkenalan 60 detik",
     copyEmail: "Salin email",
     copied: "Tersalin!",
     whatsapp: "WhatsApp",

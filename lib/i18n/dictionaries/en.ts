@@ -40,6 +40,7 @@ export const en = {
   hero: {
     name: "Muhammad Royhan",
     role: "Senior Fullstack Engineer · Team Lead",
+    positioning: "Systems where a wrong number is someone's paycheck — payroll, lending, compliance.",
     headline: "Competition kept me out. Obligation kept me in.",
     leadBefore:
       "Backend and frontend, seven years and three promotions at one company. I lean on ",
@@ -225,6 +226,13 @@ export const en = {
     empty: "First essays are being written. Check back shortly.",
   },
 
+  /** Section renders nothing while `TESTIMONIALS` (lib/testimonials.ts) is empty. */
+  testimonials: {
+    eyebrow: "In their words",
+    heading: "What people say",
+    intro: "Short, unedited, from people who worked with me directly.",
+  },
+
   stack: {
     eyebrow: "The evidence",
     heading: "Tech Stack",
@@ -236,10 +244,35 @@ export const en = {
     },
   },
 
+  /**
+   * Qualifier section, placed right before the contact CTA — answers "should
+   * I reach out" before the reader has to ask, and states availability
+   * specifics (timezone, contract type) so those never have to be asked in
+   * a first email.
+   */
+  whoFor: {
+    eyebrow: "Fit check",
+    heading: "Who this is for",
+    intro: "Reach out if any of this sounds like your system, not mine.",
+    bullets: [
+      "A wrong figure has legal or financial consequence — payroll, lending, compliance, anything that produces a number someone signs.",
+      "A payroll, lending, or compliance codebase nobody currently understands end to end.",
+      "A team that lost the senior engineer who held the context.",
+      "A system that has to survive an audit, or a handover to a team that wasn't in the room when it was built.",
+    ],
+    availabilityLabel: "Availability",
+    availability: [
+      "Remote-first",
+      "WIB · UTC+7",
+      "EOR, contract, or full-time",
+      "2-week notice",
+    ],
+  },
+
   contact: {
     heading: "Want the next chapter written on your team?",
-    intro:
-      "Open to Senior Fullstack Engineer and Team Lead roles, remote-first. Reach out directly — no forms.",
+    intro: "Reach out directly — no forms.",
+    videoLabel: "Watch a 60-second intro",
     copyEmail: "Copy email",
     copied: "Copied!",
     whatsapp: "WhatsApp",
