@@ -1,0 +1,173 @@
+---
+title: "Rental Marketplace, Inherited Mid-Build"
+slug: "rental-marketplace"
+summary: "A two-sided rental marketplace I did not start and could not rewrite — where most of the order lifecycle is driven by clocks and third parties rather than by anyone clicking anything."
+tech: ["Node.js", "Express.js", "Sequelize.js", "React.js", "Redux", "Flutter", "AWS Lambda"]
+date: "2021-12-22"
+period: "2019 — 2021 · Software Engineer"
+featured: false
+---
+
+## The constraint
+
+My first real system was one someone else had already started. A two-sided
+rental marketplace — renters on one side, item owners on the other, the
+platform mediating between them — handed over mid-run, with its decisions
+already made and its production users already on it.
+
+Nothing about that was negotiable. I could not rewrite it, could not re-argue
+its architecture, and could not pause it to understand it first. The only
+variable I actually controlled was whether it was more explainable when I
+handed it on than when I received it.
+
+That framing is the reason this project is on the site at all. Everything I
+have designed since is a reaction to it.
+
+## What a marketplace actually is
+
+The naive model of an order is a sequence of clicks: pay, confirm, ship,
+receive, return. That model survives about a week in production.
+
+The real lifecycle has roughly a dozen states, and **most transitions between
+them are not clicks**. They are timeouts, third-party webhooks, and scheduled
+jobs firing at 3am. A renter who never pays, a vendor who never confirms, an
+item that is never returned — none of those produce an event. The absence *is*
+the event, and the system has to notice it on its own.
+
+Once you see that, the architecture stops being about screens.
+
+### Cancellation is a clock, not a button
+
+An order can die from silence at four different points: awaiting payment,
+pending ID verification, awaiting vendor confirmation, and waiting for
+delivery. Each has its own deadline, and the deadlines are not uniform because
+the promises made to the renter are not uniform:
+
+- **Instant booking** — the vendor has one hour to confirm, one hour from the
+  booking start to deliver.
+- **Standard booking** — 24 hours for both, but *counted only during store
+  opening hours*. A vendor who is closed is not a vendor who is ignoring you.
+- **Delayed booking** — 24 hours, regardless of opening hours.
+
+That opening-hours clause is the part I would point at in an interview. It is
+trivial to implement and impossible to guess from a requirements document; it
+exists because a rule that punishes vendors for being closed on Sunday is
+technically correct and commercially wrong.
+
+### Two couriers, two vocabularies, one order status
+
+Deliveries ran through two third-party providers, and they do not agree on what
+a delivery is. One reports `Finding Driver → Out For Pickup → Out For Delivery
+→ Completed`. The other reports `locating_driver → driver_accept_booking →
+delivery_in_progress → delivery_completed`. Different granularity, different
+names, different failure modes.
+
+Both had to land on the same internal order status, because a renter should
+never have to learn which courier the vendor picked. So courier state was
+translated at the boundary rather than leaked into the domain — the order model
+knows *waiting for delivery, out for delivery, renting*, and nothing about
+whose driver is carrying the item.
+
+The failure paths mattered more than the happy path, and they were not
+symmetrical either:
+
+- If either courier **cancels** or **no driver is found**, the "find driver"
+  action is re-enabled so the vendor can try again. A dead order held hostage
+  by a courier is a support ticket.
+- If one provider **times out** locating a driver, its own support team picks
+  the booking up manually. In that case the button must *stay disabled* —
+  re-enabling it would let the vendor book a second driver for an order that is
+  already being rescued.
+
+Same-shaped events, opposite correct responses. That distinction only exists
+because someone read both integration contracts properly, and it is the kind of
+detail that never appears in a ticket.
+
+### The promo refund problem
+
+The hardest problem in the system was not delivery. It was this: an order
+contains three items, a promo code was applied because the combined total
+cleared a minimum, and now the renter cancels one item.
+
+What do you refund?
+
+Refund the full item price, and the remaining order no longer meets the
+minimum the discount was granted for — the renter has kept a discount they no
+longer qualify for. Refund item minus discount, and someone who cancelled a
+cheap item is silently penalised for a discount that was earned by the
+expensive ones.
+
+There is no answer that is correct from every angle, which is exactly why it
+had sat as a known bug. What shipped was an explicit, defensible rule rather
+than an elegant one:
+
+- If the promo is **not** tied to a specific store or category, the discount is
+  charged in full against the first cancelled item; subsequent cancellations
+  refund at face value.
+- If the promo **is** store- or category-specific, the discount is charged only
+  against the item that actually earned it.
+- If that leaves a refund in the negative, the platform balance is allowed to
+  go negative and carries into the next order — and while it is negative, the
+  renter cannot withdraw.
+
+I do not think it is the best possible rule. I do think it is a rule you can
+state in one sentence to a support agent, which the previous behaviour was
+not.
+
+### Failure gets a recovery path, not a log line
+
+Two patterns I still reuse came from here.
+
+Overdue rentals had an insurance policy that a scheduled job extended one day
+at a time until the item came back. That job talks to a third party, so it will
+eventually fail. Rather than let it fail into a log nobody reads, failed
+extensions surface **on the admin dashboard with a re-run button** — the people
+who notice the problem are given the means to fix it, without an engineer in
+the loop.
+
+The same instinct applies to the cancellation counter: a vendor gets three
+free cancellations a year, and past that, cancelling forces re-verification and
+closes their store until an admin reopens it. The counter resets on 1 January,
+by cron. A policy nobody has to remember to enforce is the only kind that
+actually gets enforced.
+
+## What it taught
+
+I inherited this system, and later I was promoted specifically to look after
+systems like it — code I had not written, decisions I had not made, timelines
+I had not set.
+
+The lesson took years to state properly, and it is the spine of this whole
+site: **you rarely control what you inherit. You only control whether it is
+more explainable when you hand it on.** The clearest thing I left behind was
+not a refactor. It was a written system manual — order lifecycle, cron
+inventory, courier status mappings, notification matrix, error codes — so the
+next person could answer their own questions.
+
+That instinct hardened into a design constraint at the
+[bank](/work/core-banking-bpr) a year later, and into an architectural
+requirement in the [payroll engine](/work/payroll-system) after that.
+
+## Result
+
+- Maintained and extended the marketplace from 2019 through 2021, having
+  inherited it mid-build.
+- Built the Flutter mobile app alongside the web platform, in a team.
+- Authored the system manual the platform was maintained from — the order
+  state machine, twelve scheduled jobs, three webhook integrations, and the
+  full notification matrix across email, WhatsApp and push.
+- Shipped the promo cancellation-refund logic that closed a standing bug in
+  partial-order refunds.
+
+## What I would do differently
+
+I treated the scheduled jobs as a list of independent tasks, because that is
+how I found them. They were not — several of them were transitions in a single
+order state machine, split across separate lambdas and separate schedules,
+which is why reasoning about "how can an order end up here" meant reading five
+files.
+
+Today I would name the state machine explicitly in one place and let the jobs
+be thin triggers into it. Not for elegance: so that the answer to *what can
+happen to an order* lives somewhere a person can read, rather than being
+distributed across a crontab.

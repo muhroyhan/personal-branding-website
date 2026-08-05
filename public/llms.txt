@@ -13,8 +13,8 @@ of the English text.
 ## Background
 
 - 2019 — Junior Software Engineer. ERP build and an inherited rental marketplace.
-- 2022 — Senior Software Engineer. Operational system for a rural credit bank
-  (BPR), owned from first commit through to handover.
+- 2022 — Senior Software Engineer. Employee credit system for a rural credit
+  bank (BPR), owned from first commit through to handover.
 - 2023 — Team Lead, legacy maintenance across already-shipped systems.
 - 2024–2026 — Team Lead. Payroll system: internal in 2024, extended for a client
   at 800+ employees, shipped June 2026 and still maintained.
@@ -26,8 +26,12 @@ of the English text.
 - [Payroll system](/work/payroll-system): flagship case study — scope
   resolution engine, idempotent payroll runs, PPh 21 TER / BPJS / PP 58/2023,
   generic audit trail across ten entities.
-- [Core banking, BPR](/work/core-banking-bpr): first end-to-end ownership;
-  design driven by the handover constraint.
+- [Employee credit, BPR](/work/core-banking-bpr): first end-to-end ownership;
+  multi-tenant lending portals for bank, employer and borrower, ending in a
+  generated credit agreement; design driven by the handover constraint.
+- [Rental marketplace](/work/rental-marketplace): inherited mid-build;
+  time-driven order state machine, two courier integrations behind one status
+  model, promo refund logic for partial cancellation.
 - [Writing](/writing) · [Tulisan](/id/writing): essays connecting systems
   thinking and Stoic philosophy to engineering decisions.
 - [Resume (PDF)](/royhan-resume.pdf)

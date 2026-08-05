@@ -1,7 +1,7 @@
 ---
-title: "Sistem Operasional Bank Perkreditan Rakyat"
+title: "Sistem Kredit Karyawan untuk Bank Perkreditan Rakyat"
 slug: "core-banking-bpr"
-summary: "Proyek pertama yang saya pegang penuh, dari commit pertama sampai serah terima, di bidang yang angkanya adalah saldo nasabah."
+summary: "Proyek pertama yang saya pegang penuh, dari commit pertama sampai serah terima. Tiga portal, alur approval berjenjang, dan output akhirnya bukan layar — tapi PKS yang ditandatangani."
 tech: ["Node.js", "Express.js", "Sequelize.js", "MySQL", "React.js"]
 date: "2022-11-01"
 period: "2022 · Senior Software Engineer"
@@ -14,24 +14,78 @@ featured: true
 |---|---|
 | **Peran** | Senior Software Engineer — pemegang proyek penuh |
 | **Lingkup** | Commit pertama sampai serah terima ke tim lain |
-| **Domain** | Bank Perkreditan Rakyat — operasional & pelaporan |
+| **Domain** | Kredit karyawan lewat BPR — pengajuan, approval, penerbitan PKS |
+| **Arsitektur** | Multi-tenant, 3 portal: Admin BPR, HRD perusahaan, debitor |
 | **Stack** | Node.js, Express.js, Sequelize, MySQL, React |
 
 ## Masalahnya
 
-Tahun 2022 saya pegang sistem operasional untuk Bank Perkreditan Rakyat. Dari
-commit pertama sampai serah terima. Proyek pertama yang saya kerjakan sendiri
-dari awal, di bidang yang tidak menoleransi kesalahan sekecil apa pun.
+Tahun 2022 saya pegang sistem kredit untuk Bank Perkreditan Rakyat. Dari commit
+pertama sampai serah terima. Proyek pertama yang saya kerjakan sendiri dari
+awal, di bidang yang tidak menoleransi kesalahan sekecil apa pun.
+
+Produknya kredit karyawan. Perusahaan bekerja sama dengan BPR, karyawannya
+mengajukan kredit dengan jaminan gaji, HRD perusahaan memverifikasi bahwa
+pemohon memang karyawannya dan gajinya memang sebesar itu, lalu BPR yang
+memutuskan. Tiga pihak, tiga portal, satu sistem.
 
 Di sistem perbankan tidak ada bug yang sifatnya cuma tampilan. Angka yang salah
-itu saldo seseorang, dan pemiliknya tahu lebih dulu daripada kita. Tidak ada
-staging untuk tabungan nasabah.
+itu utang seseorang, dan yang menanggungnya tahu lebih dulu daripada kita.
+Tidak ada staging untuk pinjaman nasabah.
 
-## Yang sebenarnya membentuk desainnya
+## Yang sebenarnya dihasilkan sistem ini
 
-Pekerjaan teknisnya biasa saja: rekening, transaksi, bunga, pelaporan. Yang
-tidak biasa itu bagian akhirnya. Sistem ini akan diserahkan ke tim lain, dan
-saya tidak akan ada di sana untuk menjelaskannya.
+Kebanyakan sistem menghasilkan layar. Yang ini menghasilkan **perjanjian**.
+
+Di ujung pengajuan yang disetujui, sistem menerbitkan **PKS**: perjanjian antara
+bank, perusahaan, dan debitor. Isinya pokok pinjaman, jangka waktu, angsuran
+per bulan, bunga, dan biaya tambahan. Dokumen itu yang ditandatangani orang.
+Semua proses sebelumnya ada untuk memastikan isinya benar.
+
+Dua konsekuensi lahir dari sana, dan keduanya lebih menentukan bentuk sistem
+ini daripada pilihan framework mana pun.
+
+**Ketentuan komersial itu data per tenant, bukan kode.** Tiap perusahaan mitra
+didaftarkan dengan tabel bunganya sendiri per jangka waktu, dan skema biayanya
+sendiri. Angsuran diturunkan dari situ, dan PKS yang terbit mencerminkan
+ketentuan milik perusahaan itu. Kalau tarifnya di-*hardcode*, setiap mitra baru
+berarti deploy ulang. Lebih buruk lagi, terbuka satu kelas bug di mana angka di
+layar dan angka di perjanjian bisa berbeda.
+
+**Penolakan harus final dan senyap.** Pengajuan yang ditolak HRD perusahaan
+tidak pernah sampai ke antrean BPR sama sekali. Aturannya satu baris, tapi itu
+yang membedakan analis bank yang menilai pengajuan hidup dengan analis bank
+yang harus menyisir kasus yang sudah dimatikan perusahaannya.
+
+## Alur approval
+
+Alurnya sengaja dibuat lurus dan sengaja bisa dihentikan di tiap titik:
+
+```
+debitor mengajukan
+  → HRD perusahaan setuju / tolak      (tolak → berhenti)
+  → BPR review, bisa ubah nilai, setuju / tolak
+  → debitor dapat notifikasi WA, konfirmasi / batal
+  → debitor mengisi rekening bank
+  → PKS terbit
+```
+
+Tiap tahap bisa mengakhiri proses, dan tiap tahap milik pihak berbeda dengan
+kewenangan berbeda. BPR bisa mengubah nilai pengajuan dan biaya asuransi jiwa,
+perusahaan tidak. Debitor boleh membatalkan setelah disetujui, dan itu hasil
+yang sah, bukan kondisi error. Kredit disetujui tidak sama dengan kredit
+diambil.
+
+Notifikasi di titik persetujuan dikirim lewat WhatsApp, karena debitornya
+karyawan pabrik atau kantor yang tidak sedang duduk menunggu di portal. Sistem
+ini tidak berasumsi penggunanya sedang menatapnya.
+
+## Yang membentuk desainnya
+
+Pekerjaan teknisnya biasa saja: portal multi-tenant, hak akses berjenjang,
+unggah dokumen KYC, approval, ekspor, penerbitan dokumen. Yang tidak biasa itu
+bagian akhirnya. Sistem ini akan diserahkan ke tim lain, dan saya tidak akan
+ada di sana untuk menjelaskannya.
 
 Itu mengubah hampir semua keputusan. Pertanyaannya berhenti di "apakah ini
 sudah benar" dan berubah jadi **"apakah ini benar dengan cara yang bisa
@@ -42,11 +96,18 @@ lebih berat.
   jelas saling bertentangan, saya ambil yang jelas. Kode yang pintar itu utang,
   dan yang membayarnya waktu orang lain.
 - **Istilah domain dipakai apa adanya di kode.** Nama tabel dan service sama
-  dengan istilah yang dipakai staf bank sehari-hari. Orang yang belum kenal
-  codebase tapi paham operasional bank tetap bisa menavigasinya.
+  dengan istilah yang dipakai staf bank sehari-hari: *debitor*, *angsuran*,
+  *PKS*. Orang yang belum kenal codebase tapi paham operasional bank tetap bisa
+  menavigasinya.
 - **Batas modul digambar di garis serah terima.** Modul dipisah mengikuti
-  bagian yang bisa diambil alih tim baru satu per satu. Bukan mengikuti yang
-  paling enak buat saya waktu masih jadi satu-satunya yang menulis.
+  bagian yang bisa diambil alih tim baru satu per satu: admin bank, admin
+  perusahaan, debitor. Bukan mengikuti yang paling enak buat saya waktu masih
+  jadi satu-satunya yang menulis.
+
+Hak akses diperlakukan sama. Admin bank diberi izin *read* / *write* per fitur,
+bukan per paket peran. Dan sistem menolak menghapus admin terakhir yang
+tersisa. Model izin yang bisa mengunci semua manusia dari konsol banknya
+sendiri itu bukan fitur keamanan.
 
 ## Pelajarannya
 
@@ -68,5 +129,20 @@ persis, cuma di bidang yang taruhannya bikin syarat itu tidak bisa ditawar.
 - Rilis dan serah terima ke tim maintenance terpisah, 2022.
 - Proyek pertama yang saya pegang dari commit pertama sampai serah terima, di
   level Senior Software Engineer.
+- Multi-tenant sejak desain: tiap perusahaan mitra punya jalur portalnya
+  sendiri, konfigurasi bunga dan biayanya sendiri, dan basis debitornya sendiri.
 - Menetapkan batasan desain yang jadi dasar semua pekerjaan saya berikutnya:
   *bisa dijelaskan setelah diserahkan*.
+
+## Yang akan saya lakukan berbeda
+
+Status pelunasan kredit dibiarkan sebagai perubahan manual oleh admin bank.
+Waktu itu keputusan tersebut jujur: pembayaran terjadi lewat potong gaji di
+luar sistem, jadi sistemnya memang tidak tahu. Tapi "nanti ada orang yang ingat
+mengklik ini" itu tetap sebuah keputusan desain, bukan ketiadaan keputusan. Dan
+saya mencatatnya sebagai keterbatasan, bukan menyelesaikannya.
+
+Versi yang saya bangun sekarang tetap tidak akan menebak pelunasan. Bedanya, ia
+akan membuat celahnya kelihatan: menandai kredit yang jangka waktunya sudah
+lewat sementara statusnya belum berubah. Supaya langkah manual itu diingatkan
+sistem, bukan diingat orang.

@@ -63,6 +63,40 @@ That is real overhead, paid once per employee per run. I took it because the
 alternative was override logic scattered across the codebase, which is exactly
 the class of bug that cannot be found by reading any one file.
 
+### Attendance is derived, not entered
+
+The single messiest part of the system is the one nobody expects: deciding
+whether a person worked today.
+
+Nobody types that in. It is derived from bulk-uploaded fingerprint machine
+exports, and the raw data does not answer the question on its own. A shift has
+a timetable, and the timetable determines the expected hours — eight, seven if
+the shift has no break punch, five and a half for a short shift. Falling short
+of those hours does not mean the same thing in every case:
+
+- Short hours **with** an approved permission letter — pro-rated pay.
+- Short hours **without** one — no pay for the day.
+- Hours met or exceeded — full pay.
+
+Then the calendar interferes. A national holiday counts as a working day for
+salaried staff and does not for daily-wage staff. A *cuti bersama* — a
+collective leave day — pays the daily-wage employee in full if they still have
+annual leave to deduct from, and does not if they do not. An employee who
+clocks in on a holiday under an overtime timetable gets the overtime and not
+the daily wage, because the day was never a working day for them to begin
+with. And employees at the top four job levels are exempt from all of it —
+their pay never depends on a fingerprint at all.
+
+None of that is a formula. It is a matrix of employment type × leave balance ×
+timetable × holiday type, and it is where a payroll system quietly loses
+people's money.
+
+I did not simplify it, because it is not actually complex — it is *detailed*,
+and those are different problems. Simplifying detail means deciding that some
+people's edge case does not matter. What I did instead was make each branch
+explicit and named, so that a disputed day can be walked back to the specific
+rule that produced it rather than to a nested condition nobody can read aloud.
+
 ### Idempotency, because retries are not optional
 
 A payroll run touches hundreds of records and takes minutes. Minutes are long
@@ -80,9 +114,57 @@ Processing itself is chunked through a **BullMQ** queue. At 800+ employees a
 single synchronous transaction is both a timeout risk and an all-or-nothing
 failure; chunking makes progress durable and failures local.
 
+Failure is handled per employee rather than per run. A payslip that fails is
+retried automatically; if it still fails, the run is marked failed and the
+failure is attributable to a named employee rather than to "the payroll".
+Re-running regenerates **only** the employees that failed — the ones already
+generated are left alone. Without that guarantee, recovery from a partial
+failure means re-processing 800 people to fix three, which is the kind of
+operation nobody wants to authorise at 2am and everybody eventually does badly.
+
 I also found and fixed a race condition where two concurrent cash-advance
 requests could both pass a balance check before either committed. That is the
 kind of bug that never appears in testing and always appears in production.
+
+### The upstream nobody owns
+
+Incentives are earned against production output that lives in a separate ERP —
+machine productivity, tonnage shipped, waste percentages, delivery accuracy.
+That data is not mine, does not arrive on request, and is not always correct.
+
+So it is pulled on a schedule into a staging table, ahead of the payroll
+window, rather than fetched during the run. Three properties follow, and all
+three are the point:
+
+- A payroll run never blocks on a third party being awake.
+- Bad upstream data is visible **before** it becomes a payslip, and the fetch
+  can be re-run without touching payroll at all.
+- The link between an incentive figure and the external record it came from
+  survives, so the figure can still be explained after the fact.
+
+Incentive rates themselves are a lookup, not a calculation: a production result
+maps into a banded tariff table. Bands are data. Someone renegotiating a rate
+does not need me.
+
+### Nothing becomes real before a human can review it
+
+Two things in this system are irreversible in practice: a posted payroll run,
+and the annual religious-holiday allowance (*THR*) — a legally mandated payment
+that varies by tenure and by employment type, and is calculated across a
+twelve-month window rather than a single period.
+
+Both get a review step ahead of the commit.
+
+THR is computed into its own summary that finance reviews, adjusts and signs
+off *before* the figures reach anyone's payslip. And a payroll run is gated on
+prerequisites the system checks itself — attendance data complete to the end of
+the period, upstream production data pulled, leave and overtime and sanction
+letters all approved. Those used to be tribal knowledge held by whoever had run
+payroll last month. Now they are a checklist the system evaluates and displays.
+
+The failure mode this prevents is specific and expensive: a run that completes
+successfully against incomplete inputs. Nothing errors. The numbers are simply
+wrong, and nobody knows until people are paid.
 
 ### Regulation as seeded data, not as code
 
@@ -117,6 +199,13 @@ Two came out of testing against real payroll data rather than from a spec:
 The system holds salaries and national identity numbers, so it went through a
 dedicated hardening pass:
 
+- **Row-level visibility, not just page-level.** An HR administrator can open
+  the employee module and still not see every employee in it: visibility is
+  bounded by job rank, so an admin sees peers and below and not above. Certain
+  records are restricted further, to directors, the accounting manager and
+  superadmins. Salary data is the one case where "can this user open this
+  screen" is the wrong question — the right one is which rows the screen is
+  allowed to return.
 - **Immutability guard** on posted payroll records — a completed run is
   historical fact, and history should not be editable by the application.
 - **JWT revocation**, so a terminated employee's session is dead on

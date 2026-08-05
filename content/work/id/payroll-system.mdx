@@ -75,6 +75,39 @@ itu nyata, dibayar sekali per karyawan per payroll run. Saya ambil karena
 alternatifnya adalah logika override yang tersebar di banyak file. Itu jenis
 bug yang tidak akan ketemu walau kita baca file mana pun satu per satu.
 
+### Kehadiran itu diturunkan, bukan diinput
+
+Bagian paling berantakan di sistem ini justru yang paling tidak diduga:
+menentukan apakah seseorang hari ini masuk kerja.
+
+Tidak ada yang mengetikkan itu. Datanya diturunkan dari hasil bulk upload mesin
+fingerprint, dan data mentahnya sendiri tidak menjawab pertanyaannya. Tiap
+shift punya timetable, dan timetable menentukan jam kerja yang diharapkan:
+delapan jam, tujuh jam kalau tidak ada absen istirahat, lima setengah jam untuk
+shift pendek. Kurang dari itu tidak selalu berarti hal yang sama:
+
+- Kurang jam **dengan** surat izin — gaji prorata.
+- Kurang jam **tanpa** surat izin — hari itu tidak dapat gaji.
+- Jam terpenuhi atau lebih — gaji penuh.
+
+Lalu kalendernya ikut campur. Hari libur nasional dihitung hari kerja untuk
+karyawan bulanan, tidak untuk karyawan harian. Cuti bersama membayar penuh
+karyawan harian selama jatah cuti tahunannya masih ada, dan tidak membayar
+kalau jatahnya habis. Karyawan yang absen di hari libur dengan timetable lembur
+dapat upah lembur dan tidak dapat gaji harian, karena hari itu memang bukan
+hari kerjanya. Dan karyawan di empat level jabatan teratas dikecualikan dari
+semuanya. Gajinya sama sekali tidak bergantung pada fingerprint.
+
+Itu bukan rumus. Itu matriks jenis karyawan × sisa cuti × timetable × jenis
+hari libur, dan di situlah sistem payroll diam-diam menghilangkan uang orang.
+
+Saya tidak menyederhanakannya, karena sebetulnya ini bukan rumit, ini *detail*.
+Dua masalah yang berbeda. Menyederhanakan detail artinya memutuskan bahwa kasus
+pinggiran milik sebagian orang boleh diabaikan. Yang saya lakukan justru
+sebaliknya: tiap cabang dibuat eksplisit dan punya nama, supaya hari yang
+dipersoalkan bisa ditelusuri balik ke aturan spesifik yang menghasilkannya.
+Bukan ke kondisi bersarang yang tidak bisa dibacakan siapa pun.
+
 ### Idempotency, karena retry itu pasti terjadi
 
 Satu payroll run menyentuh ratusan record dan makan waktu beberapa menit.
@@ -90,10 +123,58 @@ operator keburu klik dua kali. Semuanya berakhir sama: operasinya diulang.
   transaksi sinkron itu risiko timeout sekaligus kegagalan yang menyeret
   semuanya. Dengan dipecah, progresnya tahan gagal dan kegagalannya lokal.
 
+Kegagalan ditangani per karyawan, bukan per run. Payslip yang gagal di-retry
+otomatis. Kalau tetap gagal, run-nya ditandai gagal dan kegagalannya bisa
+ditunjuk ke karyawan tertentu, bukan ke "payroll-nya". Run ulang hanya
+memproses **karyawan yang gagal saja**, yang sudah jadi tidak disentuh. Tanpa
+jaminan itu, memulihkan kegagalan sebagian berarti memproses ulang 800 orang
+demi memperbaiki tiga. Operasi yang tidak ada orang mau menyetujuinya jam 2
+pagi, dan akhirnya selalu dilakukan dengan buruk.
+
 Saya juga menemukan dan memperbaiki satu *race condition*. Dua request kasbon
 yang datang bersamaan bisa sama-sama lolos pengecekan saldo sebelum salah
 satunya commit. Bug seperti ini tidak pernah muncul waktu testing, dan selalu
 muncul di produksi.
+
+### Data hulu yang bukan milik kita
+
+Insentif dihitung dari hasil produksi yang datanya ada di ERP terpisah:
+produktivitas mesin, tonase kirim, persentase waste, ketepatan pengiriman. Data
+itu bukan milik saya, tidak datang saat diminta, dan tidak selalu benar.
+
+Jadi data ditarik terjadwal ke tabel staging sebelum periode payroll, bukan
+diambil saat payroll run berjalan. Tiga akibatnya, dan ketiganya memang
+tujuannya:
+
+- Payroll run tidak pernah menggantung menunggu pihak ketiga hidup.
+- Data hulu yang salah kelihatan **sebelum** jadi slip gaji, dan penarikannya
+  bisa diulang tanpa menyentuh payroll sama sekali.
+- Kaitan antara angka insentif dan record asalnya tetap ada, jadi angkanya
+  masih bisa dijelaskan di kemudian hari.
+
+Tarif insentifnya sendiri berupa pemetaan, bukan perhitungan: hasil produksi
+dipetakan ke tabel tarif berjenjang. Jenjangnya data. Orang yang menegosiasikan
+ulang tarif tidak perlu lewat saya.
+
+### Tidak ada yang jadi final sebelum bisa direview manusia
+
+Dua hal di sistem ini praktis tidak bisa dibatalkan: payroll run yang sudah
+diposting, dan THR — pembayaran wajib yang nilainya bergantung masa kerja dan
+jenis karyawan, dan dihitung dari rentang dua belas bulan, bukan satu periode.
+
+Keduanya diberi tahap review sebelum final.
+
+THR dihitung dulu ke rekap tersendiri untuk direview, disesuaikan, dan
+disetujui bagian keuangan *sebelum* angkanya masuk ke slip gaji siapa pun. Dan
+payroll run dikunci oleh prasyarat yang dicek sistem sendiri: data fingerprint
+lengkap sampai akhir periode, data produksi sudah ditarik, cuti, lembur, dan
+surat sanksi sudah disetujui. Dulu semua itu pengetahuan lisan, dipegang siapa
+pun yang menjalankan payroll bulan lalu. Sekarang jadi checklist yang dievaluasi
+dan ditampilkan sistem.
+
+Mode kegagalan yang dicegah di sini spesifik dan mahal: payroll run yang
+selesai dengan sukses di atas data yang belum lengkap. Tidak ada error apa pun.
+Angkanya saja yang salah, dan tidak ada yang tahu sampai orang-orang dibayar.
 
 ### Aturan pajak disimpan sebagai data, bukan kode
 
@@ -124,6 +205,13 @@ Itu yang bikin pembagian tugas ini aman, bukan cuma praktis.
 Sistem ini menyimpan data gaji dan NIK, jadi melewati satu tahap hardening
 khusus:
 
+- **Pembatasan sampai level baris, bukan cuma level halaman.** Admin HRD bisa
+  membuka modul karyawan dan tetap tidak melihat semua orang di dalamnya.
+  Visibilitasnya dibatasi peringkat jabatan: admin melihat setara dan di
+  bawahnya, tidak ke atas. Sebagian data dibatasi lebih jauh lagi, hanya untuk
+  direksi, manajer accounting, dan superadmin. Di data gaji, "boleh tidak user
+  ini membuka halaman ini" itu pertanyaan yang salah. Yang benar: baris mana
+  yang boleh dikembalikan halaman itu.
 - **Immutability guard** untuk payroll yang sudah posted. Run yang sudah
   selesai itu catatan historis, dan aplikasi tidak boleh bisa mengubah sejarah.
 - **JWT revocation**, supaya sesi karyawan yang sudah keluar mati saat itu
