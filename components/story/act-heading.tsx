@@ -1,7 +1,6 @@
 "use client";
 
 import { motion } from "motion/react";
-import type { StoryAct } from "@/lib/constants";
 import { MeanderRule } from "@/components/motifs/meander-rule";
 import { LambdaMark } from "@/components/motifs/lambda-mark";
 import { CarvedText } from "@/components/motion/carved-text";
@@ -11,16 +10,27 @@ import { CarvedText } from "@/components/motion/carved-text";
  * a meander fret that wipes in beneath, then the title cutting itself in word
  * by word. The year and role stay plain and scannable — a recruiter reads the
  * career progression off these headings without reading a line of prose.
+ *
+ * The numeral is language-independent (it comes from `ACT_NUMERALS`); year,
+ * role and title come from the active dictionary.
  */
-export function ActHeading({ act }: { act: StoryAct }) {
+export function ActHeading({
+  numeral,
+  year,
+  role,
+  title,
+}: {
+  numeral: string;
+  year: string;
+  role: string;
+  title: string;
+}) {
   return (
     <header className="mb-10 flex flex-col gap-4">
       <div className="flex items-baseline gap-4">
-        <span className="font-inscribed text-h4 leading-none text-accent">
-          {act.numeral}
-        </span>
+        <span className="font-inscribed text-h4 leading-none text-accent">{numeral}</span>
         <span className="font-display text-h3 leading-none font-semibold text-accent tabular-nums">
-          {act.year}
+          {year}
         </span>
         <motion.span
           aria-hidden
@@ -42,12 +52,12 @@ export function ActHeading({ act }: { act: StoryAct }) {
       </div>
 
       <p className="font-mono text-caption tracking-wide text-muted-foreground uppercase">
-        {act.role}
+        {role}
       </p>
 
       <CarvedText
         as="h2"
-        text={act.title}
+        text={title}
         className="font-display text-h2 font-semibold text-fg"
       />
     </header>

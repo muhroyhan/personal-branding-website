@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getAllWritingSlugs, getWritingBySlug } from "@/lib/mdx";
 import { ReadingProgress } from "@/components/writing/reading-progress";
+import { MDX_PROSE_CLASS } from "@/components/mdx/prose";
+import { LOCALES, LOCALE_HREFLANG, isLocale, localePath } from "@/lib/i18n";
 
 export async function generateStaticParams() {
   const slugs = await getAllWritingSlugs();
@@ -11,26 +13,35 @@ export async function generateStaticParams() {
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ locale: string; slug: string }>;
 }): Promise<Metadata> {
-  const { slug } = await params;
-  const writing = await getWritingBySlug(slug).catch(() => null);
+  const { locale, slug } = await params;
+  if (!isLocale(locale)) return {};
+
+  const writing = await getWritingBySlug(slug, locale).catch(() => null);
   if (!writing) return {};
 
   return {
     title: writing.frontmatter.title,
     description: writing.frontmatter.summary,
+    alternates: {
+      canonical: localePath(locale, `/writing/${slug}`),
+      languages: Object.fromEntries(
+        LOCALES.map((l) => [LOCALE_HREFLANG[l], localePath(l, `/writing/${slug}`)]),
+      ),
+    },
   };
 }
 
 export default async function WritingArticlePage({
   params,
 }: {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ locale: string; slug: string }>;
 }) {
-  const { slug } = await params;
+  const { locale, slug } = await params;
+  if (!isLocale(locale)) notFound();
 
-  const writing = await getWritingBySlug(slug).catch(() => null);
+  const writing = await getWritingBySlug(slug, locale).catch(() => null);
   if (!writing) {
     notFound();
   }
@@ -62,11 +73,7 @@ export default async function WritingArticlePage({
         ) : null}
       </header>
 
-      <div
-        className="[&_h2]:mt-10 [&_h2]:mb-4 [&_h2]:font-display [&_h2]:text-h3 [&_h2]:font-semibold [&_h2]:text-fg [&_h3]:mt-8 [&_h3]:mb-3 [&_h3]:font-display [&_h3]:text-h4 [&_h3]:font-semibold [&_h3]:text-fg [&_p]:mb-4 [&_p]:text-body [&_p]:leading-relaxed [&_p]:text-muted-foreground [&_ul]:mb-4 [&_ul]:list-disc [&_ul]:space-y-2 [&_ul]:pl-6 [&_ul]:text-body [&_ul]:text-muted-foreground [&_strong]:font-semibold [&_strong]:text-fg [&_code]:rounded [&_code]:bg-card [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-caption [&_code]:text-fg"
-      >
-        {content}
-      </div>
+      <div className={MDX_PROSE_CLASS}>{content}</div>
     </article>
   );
 }

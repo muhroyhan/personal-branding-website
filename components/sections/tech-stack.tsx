@@ -1,31 +1,32 @@
 import { TECH_STACK_GROUPS } from "@/lib/constants";
+import type { Dictionary } from "@/lib/i18n";
 import { CarvedText } from "@/components/motion/carved-text";
 import { MeanderRule } from "@/components/motifs/meander-rule";
 
-export function TechStack() {
+export function TechStack({ dict }: { dict: Dictionary }) {
+  const t = dict.stack;
+
   return (
     <section id="stack" className="border-b border-border px-6 py-16 sm:py-20 lg:py-24">
       <div className="mx-auto max-w-3xl">
         <div className="mb-10 flex flex-col items-center gap-3 text-center sm:mb-16">
           <span className="font-mono text-caption tracking-wide text-accent uppercase">
-            The evidence
+            {t.eyebrow}
           </span>
           <CarvedText
             as="h2"
-            text="Tech Stack"
+            text={t.heading}
             className="font-display text-h2 font-semibold text-fg"
           />
           <MeanderRule className="max-w-32 text-border-strong" />
-          <p className="max-w-xl text-body text-muted-foreground">
-            The tools I reach for — chosen for what stays boring under pressure.
-          </p>
+          <p className="max-w-xl text-body text-muted-foreground">{t.intro}</p>
         </div>
 
         <div className="grid grid-cols-1 gap-10 sm:grid-cols-3 sm:gap-12">
           {TECH_STACK_GROUPS.map((group) => (
-            <div key={group.label}>
+            <div key={group.key}>
               <h3 className="mb-4 font-mono text-caption tracking-wide text-accent uppercase">
-                {group.label}
+                {t.groups[group.key]}
               </h3>
               <ul className="flex flex-wrap gap-2">
                 {group.items.map((item) => (

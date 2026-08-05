@@ -1,0 +1,157 @@
+---
+title: "Payroll for 800+ Employees"
+slug: "payroll-system"
+summary: "A payroll engine where every figure has to be re-derivable from its inputs — Indonesian tax and social-security rules, idempotent runs, and an audit trail across ten entities."
+tech: ["NestJS", "TypeScript", "PostgreSQL", "BullMQ", "React.js", "Docker"]
+date: "2026-06-01"
+period: "2024 — 2026 · Team Lead"
+featured: true
+---
+
+## The constraint
+
+Payroll has no cosmetic bugs. Every other system I had built failed in ways
+you could apologise for; this one fails as a wage that did not arrive, on the
+day rent is due, for someone who has no way to check my work.
+
+That single fact set the whole design. The question was never "how fast can
+this run" — it was **"can any figure on this payslip be explained, six months
+later, to someone who does not trust me?"**
+
+Three properties follow from that, and everything below is downstream of them:
+
+1. **Re-derivable.** Every number traceable back to the inputs that produced it.
+2. **Idempotent.** Running the same payroll twice must not pay anyone twice.
+3. **Explainable without me.** The system had to survive my handover.
+
+## Where it started
+
+In 2024 I built a payroll system for our own company. Small, internal,
+forgiving — if it broke, I heard about it from down the hall.
+
+It ran correctly for a year. When a client needed the same problem solved at
+more than 800 employees, that year of quiet was the argument for extending it
+rather than starting again. What shipped to the client in June 2026 is an
+inheritance from the internal system, not a rewrite of it.
+
+The jump in scale is what changed the engineering. At 40 employees you can
+eyeball a payroll run. At 800 you cannot, so the system has to be able to
+justify itself.
+
+## Decisions
+
+### Scope resolution: one rule, five levels of specificity
+
+Compensation rules in a real company are not flat. A meal allowance might be
+set for everyone, overridden for a division, overridden again for one position,
+and overridden a final time for a single employee who negotiated it.
+
+Modelling that as one table per rule type would have meant re-implementing the
+override logic every time a new component was added. Instead I built a single
+**scope resolution engine** with a fixed priority hierarchy:
+
+```
+employee > division > department > position > employment type
+```
+
+Any compensation component resolves through the same ladder. Adding a new
+component is a data change, not a code change — and, more importantly, the
+resolution order is one thing to explain rather than one per rule.
+
+**The trade-off:** resolution costs a lookup chain instead of a single read.
+That is real overhead, paid once per employee per run. I took it because the
+alternative was override logic scattered across the codebase, which is exactly
+the class of bug that cannot be found by reading any one file.
+
+### Idempotency, because retries are not optional
+
+A payroll run touches hundreds of records and takes minutes. Minutes are long
+enough for a connection to drop, a worker to be restarted, or an operator to
+click twice. Every one of those ends in the same place: the operation gets
+retried.
+
+So both payroll runs and cash advances (*kasbon*) are idempotent — a repeated
+request resolves to the same result rather than a second payment. Runs are
+driven by an explicit **state machine** rather than a boolean `is_processed`
+flag, so a run that died halfway is in a state the system can name and resume
+from, not an ambiguous one an engineer has to reason about at 2am.
+
+Processing itself is chunked through a **BullMQ** queue. At 800+ employees a
+single synchronous transaction is both a timeout risk and an all-or-nothing
+failure; chunking makes progress durable and failures local.
+
+I also found and fixed a race condition where two concurrent cash-advance
+requests could both pass a balance check before either committed. That is the
+kind of bug that never appears in testing and always appears in production.
+
+### Regulation as seeded data, not as code
+
+The system implements Indonesian payroll regulation: **PPh 21** income tax
+using the TER method, **BPJS** social security contributions, and the changes
+introduced by **PP 58/2023**.
+
+Tax rules change. Hard-coding rates guarantees a code deploy every time the
+government revises one — and a deploy is a bad instrument for a change that an
+accountant, not an engineer, is qualified to make.
+
+So the constants are **admin-editable, seeded with the official values**. The
+engineer's job is the calculation logic; the accountant's job is the numbers.
+The audit trail records who changed which constant and when, which is what
+makes that division of labour safe rather than merely convenient.
+
+### Correctness fixes worth naming
+
+Two came out of testing against real payroll data rather than from a spec:
+
+- **Negative take-home pay is rejected, not written.** Deductions could, in
+  combination, exceed gross pay. Arithmetically valid, institutionally absurd.
+  The run now refuses and surfaces the case for a human, instead of writing a
+  number nobody would sign.
+- **Proration is calculated on working days, not calendar days.** A person who
+  joins mid-month is paid against the days they could actually have worked.
+  Calendar-day proration quietly underpays anyone starting in a month with
+  weekends stacked at the front.
+
+### Security
+
+The system holds salaries and national identity numbers, so it went through a
+dedicated hardening pass:
+
+- **Immutability guard** on posted payroll records — a completed run is
+  historical fact, and history should not be editable by the application.
+- **JWT revocation**, so a terminated employee's session is dead on
+  termination rather than at token expiry.
+- **Rate limiting** on authentication and export endpoints.
+- A **`passwordHash` leak** through an eager-loaded association: a user
+  relation was being serialised whole into an unrelated API response. Found by
+  reading responses rather than reading code, which is the only way that class
+  of leak gets found.
+
+### Audit trail across ten entities
+
+Rather than logging changes per feature, the audit trail is **generic across
+ten entities**. One mechanism, one schema, one place to look — every mutation
+recorded with actor, timestamp, before and after.
+
+This is the piece that makes "re-derivable" true rather than aspirational. A
+figure someone disputes six months later can be walked back to the inputs and
+the decisions that produced it, without anyone needing to remember.
+
+## Result
+
+- Shipped **June 2026**, running in production for **800+ employees**.
+- Still maintained by me — which, for a payroll system, is its own verdict:
+  the failure mode of a bad one is not that it gets replaced, it is that it
+  gets replaced *loudly*.
+- The internal 2024 system remains the architectural base, so the same
+  reusable core now serves more than one client project.
+- Delivered while leading two projects and two engineers, and scoping
+  requirements directly with the client.
+
+## What I would do differently
+
+The scope resolution engine is the right abstraction, but I built it before I
+had a second consumer for it — which meant guessing at the hierarchy rather
+than deriving it. It happened to be right. Next time I would take the
+duplication for one more cycle and let the shape of the abstraction be argued
+for by two real cases instead of one plus an assumption.

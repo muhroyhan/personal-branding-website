@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { STORY_ACTS } from "@/lib/constants";
+import { ACT_ANCHORS, ACT_KEYS } from "@/lib/constants";
+import type { Dictionary } from "@/lib/i18n";
 
 /**
  * Persistent story progress: shows which of the five acts the reader is in.
@@ -11,13 +12,13 @@ import { STORY_ACTS } from "@/lib/constants";
  * Observes a thin band at the viewport middle so the active act is whichever
  * one the reader is actually looking at, not merely whichever is on screen.
  */
-export function StoryRail() {
+export function StoryRail({ dict }: { dict: Dictionary }) {
   const [active, setActive] = useState(0);
 
   useEffect(() => {
-    const sections = STORY_ACTS.map((act) => document.getElementById(act.id)).filter(
-      (el): el is HTMLElement => el !== null,
-    );
+    const sections = ACT_KEYS.map((key) =>
+      document.getElementById(ACT_ANCHORS[key]),
+    ).filter((el): el is HTMLElement => el !== null);
     if (!sections.length) return;
 
     const observer = new IntersectionObserver(
@@ -37,16 +38,16 @@ export function StoryRail() {
 
   return (
     <nav
-      aria-label="Story progress"
+      aria-label={dict.nav.storyProgress}
       className="pointer-events-none fixed top-1/2 left-6 z-40 hidden -translate-y-1/2 xl:block"
     >
       <ol className="flex flex-col gap-4">
-        {STORY_ACTS.map((act, index) => {
+        {ACT_KEYS.map((key, index) => {
           const isActive = index === active;
           return (
-            <li key={act.id}>
+            <li key={key}>
               <a
-                href={`#${act.id}`}
+                href={`#${ACT_ANCHORS[key]}`}
                 className="pointer-events-auto flex items-center gap-3 outline-none"
                 aria-current={isActive ? "step" : undefined}
               >
@@ -61,7 +62,7 @@ export function StoryRail() {
                     isActive ? "text-accent" : "text-muted-foreground/50"
                   }`}
                 >
-                  {act.year}
+                  {dict.acts[key].year}
                 </span>
               </a>
             </li>

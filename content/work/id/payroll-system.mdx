@@ -1,0 +1,163 @@
+---
+title: "Sistem Payroll 800+ Karyawan"
+slug: "payroll-system"
+summary: "Engine payroll dengan PPh 21 TER, BPJS, dan PP 58/2023. Payroll run idempoten, audit trail 10 entitas, setiap angka bisa dilacak sampai ke sumbernya."
+tech: ["NestJS", "TypeScript", "PostgreSQL", "BullMQ", "React.js", "Docker"]
+date: "2026-06-01"
+period: "2024 — 2026 · Team Lead"
+featured: true
+---
+
+## Ringkasan
+
+| | |
+|---|---|
+| **Peran** | Team Lead — arsitektur, implementasi, scoping ke klien |
+| **Skala** | 800+ karyawan, rilis produksi Juni 2026 |
+| **Domain** | PPh 21 metode TER, BPJS, PP 58/2023 |
+| **Stack** | NestJS, PostgreSQL, BullMQ, React, Docker |
+| **Tim** | 2 proyek, 2 engineer |
+
+## Masalahnya
+
+Di payroll tidak ada bug yang sifatnya cuma tampilan. Angka yang salah bukan
+laporan bug. Itu gaji yang tidak sampai, di tanggal orang harus bayar cicilan,
+ke orang yang tidak punya cara memeriksa hitungan saya.
+
+Jadi pertanyaan desainnya bukan "seberapa cepat sistem ini jalan". Melainkan:
+**bisakah setiap angka di slip gaji dijelaskan enam bulan kemudian, ke orang
+yang tidak punya alasan untuk percaya pada saya?**
+
+Dari situ lahir tiga syarat:
+
+1. **Bisa dilacak.** Setiap angka bisa ditelusuri sampai ke data sumbernya.
+2. **Idempoten.** Payroll dijalankan dua kali tidak boleh membayar dua kali.
+3. **Bisa dijelaskan tanpa saya.** Sistem harus selamat dari serah terima.
+
+## Perjalanannya
+
+2024. Sistem payroll untuk perusahaan sendiri. Internal, skala kecil, risikonya
+masih terkendali. Jalan benar selama setahun penuh.
+
+2025. Klien butuh masalah yang sama diselesaikan untuk 800+ karyawan. Setahun
+tanpa insiden itu yang jadi alasan untuk melanjutkan sistem yang sudah ada,
+bukan menulis ulang dari nol. Yang rilis ke klien Juni 2026 adalah kelanjutan
+sistem internal tadi.
+
+Lompatan skalanya yang mengubah cara kerja teknisnya. Payroll 40 orang masih
+bisa dicek manual. 800 orang tidak bisa. Jadi sistemnya sendiri yang harus bisa
+mempertanggungjawabkan hasilnya.
+
+## Keputusan arsitektur
+
+### Scope resolution: satu aturan, lima tingkat
+
+Aturan kompensasi di perusahaan nyata tidak pernah datar. Tunjangan makan bisa
+berlaku untuk semua orang, lalu di-*override* untuk satu divisi, di-*override*
+lagi untuk satu posisi, dan terakhir di-*override* untuk satu karyawan yang
+memang menegosiasikannya.
+
+Kalau tiap jenis aturan dibuatkan tabel dan logikanya sendiri, logika override
+harus ditulis ulang setiap ada komponen gaji baru. Saya bangun satu **scope
+resolution engine** dengan urutan prioritas yang tetap:
+
+```
+employee > division > department > position > employment type
+```
+
+Semua komponen kompensasi lewat urutan yang sama. Menambah komponen baru jadi
+perubahan data, bukan perubahan kode. Yang lebih penting: urutan resolusinya
+cuma satu hal yang perlu dijelaskan ke orang baru, bukan satu penjelasan untuk
+tiap aturan.
+
+**Konsekuensinya:** resolusi butuh rantai lookup, bukan sekali baca. Overhead
+itu nyata, dibayar sekali per karyawan per payroll run. Saya ambil karena
+alternatifnya adalah logika override yang tersebar di banyak file. Itu jenis
+bug yang tidak akan ketemu walau kita baca file mana pun satu per satu.
+
+### Idempotency, karena retry itu pasti terjadi
+
+Satu payroll run menyentuh ratusan record dan makan waktu beberapa menit.
+Beberapa menit itu cukup lama untuk koneksi putus, worker restart, atau
+operator keburu klik dua kali. Semuanya berakhir sama: operasinya diulang.
+
+- Payroll run dan kasbon dibuat **idempoten**. Request yang berulang
+  menghasilkan hasil yang sama, bukan pembayaran kedua.
+- Run dikendalikan **state machine**, bukan flag boolean `is_processed`. Run
+  yang mati di tengah punya status yang jelas namanya dan bisa dilanjutkan.
+  Bukan status abu-abu yang harus ditebak engineer jam 2 pagi.
+- Pemrosesan dipecah lewat antrean **BullMQ**. Di angka 800+ karyawan, satu
+  transaksi sinkron itu risiko timeout sekaligus kegagalan yang menyeret
+  semuanya. Dengan dipecah, progresnya tahan gagal dan kegagalannya lokal.
+
+Saya juga menemukan dan memperbaiki satu *race condition*. Dua request kasbon
+yang datang bersamaan bisa sama-sama lolos pengecekan saldo sebelum salah
+satunya commit. Bug seperti ini tidak pernah muncul waktu testing, dan selalu
+muncul di produksi.
+
+### Aturan pajak disimpan sebagai data, bukan kode
+
+Sistem ini mengikuti PPh 21 metode TER, BPJS, dan PP 58/2023.
+
+Aturan pajak berubah. Kalau tarifnya di-*hardcode*, setiap revisi pemerintah
+berarti deploy ulang. Padahal yang paling paham angkanya bagian keuangan, bukan
+engineer.
+
+Jadi konstantanya **bisa diubah dari halaman admin, dengan nilai resmi yang
+sudah di-seed di awal**. Logika perhitungan urusan engineer, angkanya urusan
+bagian keuangan. Audit trail mencatat siapa mengubah konstanta apa dan kapan.
+Itu yang bikin pembagian tugas ini aman, bukan cuma praktis.
+
+### Dua perbaikan yang muncul dari data asli
+
+- **Take-home negatif ditolak, bukan ditulis.** Gabungan beberapa potongan bisa
+  melebihi gaji kotor. Secara hitungan valid, tapi tidak masuk akal untuk
+  dibayarkan. Sekarang payroll run-nya berhenti dan mengangkat kasusnya ke
+  manusia.
+- **Prorate pakai hari kerja, bukan hari kalender.** Karyawan yang masuk tengah
+  bulan dibayar atas hari yang memang bisa dia kerjakan. Prorate kalender
+  diam-diam merugikan orang yang masuk di bulan dengan akhir pekan menumpuk di
+  awal.
+
+### Security
+
+Sistem ini menyimpan data gaji dan NIK, jadi melewati satu tahap hardening
+khusus:
+
+- **Immutability guard** untuk payroll yang sudah posted. Run yang sudah
+  selesai itu catatan historis, dan aplikasi tidak boleh bisa mengubah sejarah.
+- **JWT revocation**, supaya sesi karyawan yang sudah keluar mati saat itu
+  juga, bukan menunggu token kedaluwarsa sendiri.
+- **Rate limiting** di endpoint login dan ekspor data.
+- **Kebocoran `passwordHash`** lewat relasi yang ikut ter-*eager load*. Satu
+  relasi user terserialisasi utuh ke response API yang sebenarnya tidak
+  berhubungan. Ketemunya karena saya baca response-nya, bukan baca kodenya.
+
+### Audit trail untuk 10 entitas
+
+Bukan logging yang ditulis ulang per fitur, tapi audit trail **generik untuk 10
+entitas**. Satu mekanisme, satu skema, satu tempat untuk mencari. Setiap
+perubahan tercatat lengkap: siapa pelakunya, kapan, nilai sebelum dan sesudah.
+
+Bagian ini yang bikin "setiap angka bisa dilacak" jadi kenyataan, bukan sekadar
+niat baik. Angka yang dipersoalkan enam bulan kemudian bisa ditelusuri balik ke
+data dan keputusan yang menghasilkannya, tanpa perlu ada yang mengingat-ingat.
+
+## Hasil
+
+- Rilis **Juni 2026**, produksi untuk **800+ karyawan**.
+- Sampai sekarang masih saya yang rawat.
+- Sistem internal 2024 tetap jadi basis arsitekturnya, dan core-nya sekarang
+  dipakai lintas proyek klien.
+- Dikerjakan sambil memimpin 2 proyek dan 2 engineer, termasuk scoping
+  kebutuhan langsung dengan klien.
+
+## Yang akan saya lakukan berbeda
+
+Scope resolution engine ini abstraksi yang tepat, tapi saya membangunnya
+sebelum ada kasus kedua yang memakainya. Artinya urutan prioritasnya saya
+tebak, bukan saya turunkan dari kebutuhan nyata. Kebetulan tebakannya benar.
+
+Lain kali saya akan tahan dulu, biarkan kodenya duplikat satu siklus lagi.
+Bentuk abstraksinya lebih baik ditentukan dua kasus nyata, daripada satu kasus
+ditambah asumsi.

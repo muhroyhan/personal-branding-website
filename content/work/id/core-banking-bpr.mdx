@@ -1,0 +1,72 @@
+---
+title: "Sistem Operasional Bank Perkreditan Rakyat"
+slug: "core-banking-bpr"
+summary: "Proyek pertama yang saya pegang penuh, dari commit pertama sampai serah terima, di bidang yang angkanya adalah saldo nasabah."
+tech: ["Node.js", "Express.js", "Sequelize.js", "MySQL", "React.js"]
+date: "2022-11-01"
+period: "2022 · Senior Software Engineer"
+featured: true
+---
+
+## Ringkasan
+
+| | |
+|---|---|
+| **Peran** | Senior Software Engineer — pemegang proyek penuh |
+| **Lingkup** | Commit pertama sampai serah terima ke tim lain |
+| **Domain** | Bank Perkreditan Rakyat — operasional & pelaporan |
+| **Stack** | Node.js, Express.js, Sequelize, MySQL, React |
+
+## Masalahnya
+
+Tahun 2022 saya pegang sistem operasional untuk Bank Perkreditan Rakyat. Dari
+commit pertama sampai serah terima. Proyek pertama yang saya kerjakan sendiri
+dari awal, di bidang yang tidak menoleransi kesalahan sekecil apa pun.
+
+Di sistem perbankan tidak ada bug yang sifatnya cuma tampilan. Angka yang salah
+itu saldo seseorang, dan pemiliknya tahu lebih dulu daripada kita. Tidak ada
+staging untuk tabungan nasabah.
+
+## Yang sebenarnya membentuk desainnya
+
+Pekerjaan teknisnya biasa saja: rekening, transaksi, bunga, pelaporan. Yang
+tidak biasa itu bagian akhirnya. Sistem ini akan diserahkan ke tim lain, dan
+saya tidak akan ada di sana untuk menjelaskannya.
+
+Itu mengubah hampir semua keputusan. Pertanyaannya berhenti di "apakah ini
+sudah benar" dan berubah jadi **"apakah ini benar dengan cara yang bisa
+diperiksa orang lain, tanpa saya?"** Dua hal yang berbeda, dan yang kedua jauh
+lebih berat.
+
+- **Jelas dulu, baru ringkas.** Setiap kali versi yang ringkas dan versi yang
+  jelas saling bertentangan, saya ambil yang jelas. Kode yang pintar itu utang,
+  dan yang membayarnya waktu orang lain.
+- **Istilah domain dipakai apa adanya di kode.** Nama tabel dan service sama
+  dengan istilah yang dipakai staf bank sehari-hari. Orang yang belum kenal
+  codebase tapi paham operasional bank tetap bisa menavigasinya.
+- **Batas modul digambar di garis serah terima.** Modul dipisah mengikuti
+  bagian yang bisa diambil alih tim baru satu per satu. Bukan mengikuti yang
+  paling enak buat saya waktu masih jadi satu-satunya yang menulis.
+
+## Pelajarannya
+
+Serah terimanya mengajari saya lebih banyak daripada proses membangunnya.
+
+Kode yang kita lepas ke orang lain harus bisa menjelaskan dirinya sendiri,
+tanpa kita di ruangan. Begitu itu dianggap serius, ini berhenti jadi urusan
+dokumentasi dan berubah jadi urusan arsitektur. Strukturnya membuat alasannya
+kelihatan, atau tidak sama sekali. Tidak ada README yang bisa menyelamatkan
+struktur yang tidak.
+
+Semua sistem yang saya rancang setelah itu dibangun dengan batasan yang sama,
+termasuk [engine payroll](/id/work/payroll-system) dua tahun kemudian. Syarat
+bahwa setiap angka harus bisa dilacak sampai ke sumbernya itu ide yang sama
+persis, cuma di bidang yang taruhannya bikin syarat itu tidak bisa ditawar.
+
+## Hasil
+
+- Rilis dan serah terima ke tim maintenance terpisah, 2022.
+- Proyek pertama yang saya pegang dari commit pertama sampai serah terima, di
+  level Senior Software Engineer.
+- Menetapkan batasan desain yang jadi dasar semua pekerjaan saya berikutnya:
+  *bisa dijelaskan setelah diserahkan*.

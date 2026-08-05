@@ -1,18 +1,19 @@
 import Link from "next/link";
 import { getAllWork } from "@/lib/mdx";
 import type { WorkListItem } from "@/types/work";
+import { localePath, type Dictionary, type Locale } from "@/lib/i18n";
 import { CarvedText } from "@/components/motion/carved-text";
 import { MeanderRule } from "@/components/motifs/meander-rule";
 
-export function WorkCard({ item }: { item: WorkListItem }) {
+export function WorkCard({ item, locale }: { item: WorkListItem; locale: Locale }) {
   return (
     <Link
-      href={`/work/${item.slug}`}
+      href={localePath(locale, `/work/${item.slug}`)}
       className="group flex flex-col gap-4 rounded-lg border border-border-strong bg-card p-6 transition-all duration-200 hover:border-accent hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/20"
     >
       <div>
         <p className="font-mono text-caption tracking-wide text-muted-foreground uppercase">
-          {item.frontmatter.date}
+          {item.frontmatter.period ?? item.frontmatter.date}
         </p>
         <h3 className="mt-2 flex items-center gap-1.5 font-display text-h4 font-semibold text-fg transition-colors group-hover:text-accent">
           {item.frontmatter.title}
@@ -38,40 +39,45 @@ export function WorkCard({ item }: { item: WorkListItem }) {
   );
 }
 
-export async function WorkPreview() {
-  const allWork = await getAllWork();
+export async function WorkPreview({
+  locale,
+  dict,
+}: {
+  locale: Locale;
+  dict: Dictionary;
+}) {
+  const allWork = await getAllWork(locale);
   const items = allWork.slice(0, 2);
+  const t = dict.work;
 
   return (
     <section id="work" className="border-b border-border px-6 py-16 sm:py-20 lg:py-24">
       <div className="mx-auto max-w-5xl">
         <div className="mb-10 flex flex-col items-center gap-3 text-center sm:mb-16">
           <span className="font-mono text-caption tracking-wide text-accent uppercase">
-            The evidence
+            {t.eyebrow}
           </span>
           <CarvedText
             as="h2"
-            text="Selected Work"
+            text={t.heading}
             className="font-display text-h2 font-semibold text-fg"
           />
           <MeanderRule className="max-w-32 text-border-strong" />
-          <p className="max-w-xl text-body text-muted-foreground">
-            The systems behind the story, written up in full.
-          </p>
+          <p className="max-w-xl text-body text-muted-foreground">{t.intro}</p>
         </div>
 
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
           {items.map((item) => (
-            <WorkCard key={item.slug} item={item} />
+            <WorkCard key={item.slug} item={item} locale={locale} />
           ))}
         </div>
 
         <div className="mt-10 flex justify-center">
           <Link
-            href="/work"
+            href={localePath(locale, "/work")}
             className="font-mono text-caption tracking-wide text-accent uppercase transition-colors hover:text-fg"
           >
-            View all work →
+            {t.viewAll}
           </Link>
         </div>
       </div>
