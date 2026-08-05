@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link, { useLinkStatus } from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LOCALES,
@@ -11,6 +11,28 @@ import {
   switchLocalePath,
   type Locale,
 } from "@/lib/i18n";
+
+/**
+ * Must render *inside* the Link (that's how `useLinkStatus` finds the
+ * navigation it belongs to) — it can't be read from the parent, since both
+ * locale links exist in the DOM at once but only the clicked one is pending.
+ * `prefetch={false}` on the parent Link means this is the only signal a click
+ * actually did something before the new page shows up.
+ */
+function LocaleLabel({ children }: { children: React.ReactNode }) {
+  const { pending } = useLinkStatus();
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      {children}
+      <span
+        aria-hidden
+        className={`h-2.5 w-2.5 animate-spin rounded-full border border-current border-t-transparent transition-opacity ${
+          pending ? "opacity-100" : "opacity-0"
+        }`}
+      />
+    </span>
+  );
+}
 
 /**
  * Switches locale without leaving the page. `usePathname` returns the URL as
@@ -71,7 +93,7 @@ export function LanguageSwitcher({
                   : "text-muted-foreground transition-colors hover:text-fg"
               }
             >
-              {LOCALE_LABELS[target]}
+              <LocaleLabel>{LOCALE_LABELS[target]}</LocaleLabel>
             </Link>
           </span>
         );

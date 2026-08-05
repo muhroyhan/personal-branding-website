@@ -50,7 +50,7 @@ export default async function PrivacyPage({
   const t = dict.privacy;
 
   return (
-    <article className="mx-auto max-w-2xl px-6 py-24">
+    <article className="mx-auto max-w-3xl px-6 py-24">
       <header className="mb-12 border-b border-border pb-8">
         <p className="font-mono text-caption tracking-wide text-muted-foreground uppercase">
           {t.lastUpdated}
@@ -68,16 +68,20 @@ export default async function PrivacyPage({
           </h2>
           <p className="mb-5 text-body text-muted-foreground">{t.collectIntro}</p>
 
+          {/* `table-fixed` with proportional column widths, rather than
+              `whitespace-nowrap`, so long item/retention text wraps inside
+              its own cell instead of forcing the table wider than the
+              article and getting clipped on narrower screens. */}
           <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-body">
+            <table className="w-full table-fixed border-collapse text-body">
               <tbody>
                 {t.collectTable.map((row) => (
                   <tr key={row.item} className="border-b border-border align-top">
-                    <td className="py-3 pr-4 font-mono text-caption tracking-wide text-accent uppercase whitespace-nowrap">
+                    <td className="w-[28%] py-3 pr-4 font-mono text-caption tracking-wide text-accent uppercase">
                       {row.item}
                     </td>
                     <td className="py-3 pr-4 text-muted-foreground">{row.purpose}</td>
-                    <td className="py-3 text-caption text-muted-foreground/70 whitespace-nowrap">
+                    <td className="w-[22%] py-3 text-caption text-muted-foreground/70">
                       {row.retention}
                     </td>
                   </tr>
