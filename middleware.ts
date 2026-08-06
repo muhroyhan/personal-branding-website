@@ -7,7 +7,6 @@ import {
   type Locale,
 } from "@/lib/i18n/config";
 
-const PREFIXED_LOCALES = LOCALES.filter((locale) => locale !== DEFAULT_LOCALE);
 const COOKIE_OPTS = { path: "/", maxAge: LOCALE_COOKIE_MAX_AGE } as const;
 
 function isKnownLocale(value: string | undefined): value is Locale {
@@ -61,13 +60,19 @@ function localeFromCountry(country: string | null): Locale {
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  const prefixedLocale = PREFIXED_LOCALES.find(
+  // Checked against every locale, not just "id": a request that already
+  // spells out `/en/...` explicitly is a valid match for `app/[locale]/...`
+  // as-is and must pass through untouched. Skipping "en" here would fall
+  // through to the cookie-redirect branch below, which would prepend the
+  // cookie's locale in front of the already-correct `/en` segment
+  // (`/id/en/...`) and 404.
+  const matchedLocale = LOCALES.find(
     (locale) => pathname === `/${locale}` || pathname.startsWith(`/${locale}/`),
   );
 
-  if (prefixedLocale) {
+  if (matchedLocale) {
     const response = NextResponse.next();
-    response.cookies.set(LOCALE_COOKIE, prefixedLocale, COOKIE_OPTS);
+    response.cookies.set(LOCALE_COOKIE, matchedLocale, COOKIE_OPTS);
     return response;
   }
 
