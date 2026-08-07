@@ -12,6 +12,11 @@ export type WorkFrontmatter = {
    */
   period?: string;
   featured?: boolean;
+  /** External links shown on the card and article header, e.g. source or package registry. */
+  links?: {
+    github?: string;
+    npm?: string;
+  };
 };
 
 export type WorkListItem = {

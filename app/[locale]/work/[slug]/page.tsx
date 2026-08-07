@@ -69,6 +69,30 @@ export default async function WorkCaseStudyPage({
             ))}
           </ul>
         ) : null}
+        {frontmatter.links ? (
+          <p className="mt-4 flex flex-wrap gap-4">
+            {frontmatter.links.github ? (
+              <a
+                href={frontmatter.links.github}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-mono text-caption tracking-wide text-accent uppercase transition-colors hover:text-fg"
+              >
+                GitHub ↗
+              </a>
+            ) : null}
+            {frontmatter.links.npm ? (
+              <a
+                href={frontmatter.links.npm}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-mono text-caption tracking-wide text-accent uppercase transition-colors hover:text-fg"
+              >
+                npm ↗
+              </a>
+            ) : null}
+          </p>
+        ) : null}
       </header>
 
       <div className={MDX_PROSE_CLASS}>{content}</div>
