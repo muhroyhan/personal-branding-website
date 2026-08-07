@@ -86,10 +86,17 @@ Once steps 1–2 are done, every PR will show both the GitHub Actions CI check a
 ## Release checklist (every merge to `main`)
 
 1. Confirm CI is green on `develop` (latest commit, not just at PR-merge time).
-2. Open a PR from `develop` into `main`.
-3. Confirm CI is green on that PR.
-4. Merge (only after branch-protection's "up to date" check passes — see step 4 above).
-5. Open the Vercel dashboard → Deployments → confirm the new production deployment succeeded (not just "Building") and the production URL actually serves the new commit.
+2. Bump `version` in `package.json` (semver: patch for fixes, minor for features, major for breaking changes) as part of the release PR.
+3. Open a PR from `develop` into `main`.
+4. Confirm CI is green on that PR.
+5. Merge (only after branch-protection's "up to date" check passes — see step 4 above).
+6. `.github/workflows/release.yml` runs on the resulting push to `main`, tags the commit `vX.Y.Z` from `package.json#version`, and publishes a GitHub Release with auto-generated notes. It's a no-op if the version wasn't bumped (tag already exists) — safe to merge without a bump when a release isn't warranted.
+7. Open the Vercel dashboard → Deployments → confirm the new production deployment succeeded (not just "Building") and the production URL actually serves the new commit.
+
+### Versioning
+
+- `package.json#version` is the single source of truth. `lib/version.ts` re-exports it as `APP_VERSION`, and the footer links it to `${REPO_URL}/releases` on every page, including the homepage.
+- Bumping is manual (step 2 above) — CI never edits `package.json`, it only tags and publishes a release once the bump lands on `main`.
 
 ## SEO artifacts
 
