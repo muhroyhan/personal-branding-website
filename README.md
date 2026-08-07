@@ -86,17 +86,22 @@ Once steps 1–2 are done, every PR will show both the GitHub Actions CI check a
 ## Release checklist (every merge to `main`)
 
 1. Confirm CI is green on `develop` (latest commit, not just at PR-merge time).
-2. Bump `version` in `package.json` (semver: patch for fixes, minor for features, major for breaking changes) as part of the release PR.
-3. Open a PR from `develop` into `main`.
-4. Confirm CI is green on that PR.
-5. Merge (only after branch-protection's "up to date" check passes — see step 4 above).
-6. `.github/workflows/release.yml` runs on the resulting push to `main`, tags the commit `vX.Y.Z` from `package.json#version`, and publishes a GitHub Release with auto-generated notes. It's a no-op if the version wasn't bumped (tag already exists) — safe to merge without a bump when a release isn't warranted.
-7. Open the Vercel dashboard → Deployments → confirm the new production deployment succeeded (not just "Building") and the production URL actually serves the new commit.
+2. Open a PR from `develop` into `main`.
+3. Confirm CI is green on that PR.
+4. Merge (only after branch-protection's "up to date" check passes — see step 4 above).
+5. `.github/workflows/release.yml` runs on the resulting push to `main` and calls [semantic-release](https://semantic-release.gitbook.io/), which decides the version by itself from the commit messages merged in — nothing to fill in by hand. It's a no-op (no tag, no release) if none of the commits since the last release warrant one.
+6. Open the Vercel dashboard → Deployments → confirm the new production deployment succeeded (not just "Building") and the production URL actually serves the new commit. Because semantic-release pushes its own version-bump commit back to `main`, expect **two** deployments per release: one for the merge, one for that follow-up commit — the second is the one that actually serves the bumped version.
 
 ### Versioning
 
-- `package.json#version` is the single source of truth. `lib/version.ts` re-exports it as `APP_VERSION`, and the footer links it to `${REPO_URL}/releases` on every page, including the homepage.
-- Bumping is manual (step 2 above) — CI never edits `package.json`, it only tags and publishes a release once the bump lands on `main`.
+Fully automatic — there is no version number to type in anywhere. It runs on the [Conventional Commits](https://www.conventionalcommits.org) standard, enforced only by convention (no commit-msg hook installed): prefix every commit/PR-squash-message with `fix:`, `feat:`, `chore:`, `docs:`, etc.
+
+- `fix:` → patch release (`0.1.0` → `0.1.1`)
+- `feat:` → minor release (`0.1.0` → `0.2.0`)
+- `feat!:`, `fix!:`, or a `BREAKING CHANGE:` footer → major release (`0.1.0` → `1.0.0`)
+- Anything else (`chore:`, `docs:`, `style:`, `refactor:` without `!`, etc.) → no release
+
+On each qualifying push to `main`, `semantic-release` (config: `.releaserc.json`) computes the next version from those commit messages, then: bumps `version` in `package.json`, updates `CHANGELOG.md`, commits both back to `main` as `chore(release): X.Y.Z [skip ci]` (the `[skip ci]` stops that commit from re-triggering `release.yml`), tags it `vX.Y.Z`, and publishes a GitHub Release with generated notes. `lib/version.ts` re-exports `package.json#version` as `APP_VERSION`, which the footer links to `${REPO_URL}/releases` on every page, including the homepage — so the live site always reflects the latest published release once that second deploy (see step 6 above) lands.
 
 ## SEO artifacts
 

@@ -1,21 +1,27 @@
 name: Release
 
-# Versioning is manual and deliberate: bump `version` in package.json as part
-# of the develop -> main release PR (see README "Release checklist"). This
-# workflow only reacts to that bump once it lands on main — it tags the
-# commit and publishes a GitHub Release, it never edits package.json itself.
+# Fully automatic, no manual version input: semantic-release reads Conventional
+# Commits (https://www.conventionalcommits.org) on every push to `main`,
+# decides the next semver bump itself (fix -> patch, feat -> minor,
+# "BREAKING CHANGE" / "!" -> major, anything else -> no release), then bumps
+# package.json, updates CHANGELOG.md, tags the commit, and publishes a GitHub
+# Release. See .releaserc.json for the pipeline and README "Versioning".
 on:
   push:
     branches: [main]
-    paths:
-      - "package.json"
 
 permissions:
   contents: write
+  issues: write
+  pull-requests: write
+
+concurrency:
+  group: release-main
+  cancel-in-progress: false
 
 jobs:
-  tag-release:
-    name: Tag and publish release
+  release:
+    name: semantic-release
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -23,31 +29,16 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Read version from package.json
-        id: pkg
-        run: echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
 
-      - name: Skip if this version was already released
-        id: check
-        run: |
-          if git rev-parse "v${{ steps.pkg.outputs.version }}" >/dev/null 2>&1; then
-            echo "Tag v${{ steps.pkg.outputs.version }} already exists, nothing to do."
-            echo "exists=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "exists=false" >> "$GITHUB_OUTPUT"
-          fi
+      - name: Install dependencies
+        run: npm ci
 
-      - name: Create tag
-        if: steps.check.outputs.exists == 'false'
-        run: |
-          git tag "v${{ steps.pkg.outputs.version }}"
-          git push origin "v${{ steps.pkg.outputs.version }}"
-
-      - name: Create GitHub release
-        if: steps.check.outputs.exists == 'false'
+      - name: Release
         env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh release create "v${{ steps.pkg.outputs.version }}" \
-            --title "v${{ steps.pkg.outputs.version }}" \
-            --generate-notes
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx semantic-release
