@@ -56,6 +56,9 @@ export const CONTACT_LINKS = {
   github: "https://github.com/muhroyhan",
 };
 
+/** The site's own repo, not the profile link above — used for the release/version link in the footer. */
+export const REPO_URL = "https://github.com/muhroyhan/personal-branding-website";
+
 /** Lives in `public/`, so it is locale-independent and needs no prefix. */
 export const RESUME_PATH = "/royhan-resume.pdf";
 

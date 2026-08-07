@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { ACT_ANCHORS, CONTACT_LINKS, RESUME_PATH } from "@/lib/constants";
+import { ACT_ANCHORS, CONTACT_LINKS, REPO_URL, RESUME_PATH } from "@/lib/constants";
 import { localePath, type Dictionary, type Locale } from "@/lib/i18n";
 import { LanguageSwitcher } from "@/components/layout/language-switcher";
+import { APP_VERSION } from "@/lib/version";
 
 export function Footer({ locale, dict }: { locale: Locale; dict: Dictionary }) {
   const year = new Date().getFullYear();
@@ -68,7 +69,17 @@ export function Footer({ locale, dict }: { locale: Locale; dict: Dictionary }) {
           {/* Second switcher down here for the reader who got all the way to the
               bottom in the wrong language and would otherwise have to scroll
               back up to the navbar to change it. */}
-          <LanguageSwitcher locale={locale} className="uppercase" />
+          <div className="flex items-center gap-4">
+            <Link
+              href={`${REPO_URL}/releases`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-mono text-caption tracking-wide text-muted-foreground transition-colors hover:text-fg"
+            >
+              v{APP_VERSION}
+            </Link>
+            <LanguageSwitcher locale={locale} className="uppercase" />
+          </div>
         </div>
       </div>
     </footer>
