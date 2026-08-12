@@ -13,7 +13,7 @@ featured: false
 | | |
 |---|---|
 | **Peran** | Software Engineer — maintenance & pengembangan lanjutan |
-| **Lingkup** | Proyek warisan, dilanjutkan 2019–2021 |
+| **Lingkup** | Proyek yang dilanjutkan 2019–2021 |
 | **Domain** | Marketplace sewa dua sisi (penyewa & vendor) |
 | **Stack** | Express.js, Sequelize, React, Redux, Flutter, AWS Lambda |
 | **Integrasi** | Payment gateway, 2 penyedia kurir, WhatsApp, email, asuransi |
@@ -22,25 +22,25 @@ featured: false
 
 Sistem pertama yang saya kerjakan serius dimulai orang lain: marketplace sewa
 dua sisi, penyewa di satu sisi, pemilik barang di sisi lain. Diserahkan ke saya
-di tengah jalan, keputusan sudah diambil, pengguna sudah jalan di produksi.
+di tengah jalan, keputusan yang sudah ditentukan, saya hanya melanjutkan.
 
 Tidak bisa ditulis ulang, tidak bisa dihentikan dulu supaya saya paham. Satu
 variabel yang benar-benar saya pegang: apakah sistem ini lebih bisa dijelaskan
 waktu saya lepas, dibanding waktu saya terima.
 
-## Sebagian besar lifecycle-nya adalah kesunyian, bukan klik
+## Sebagian besar lifecycle-nya ada di balik layar, bukan klik
 
 Order kelihatan seperti urutan klik: bayar, konfirmasi, kirim, terima,
-kembalikan. Model itu bertahan kira-kira seminggu di produksi.
+kembalikan.
 
 Lifecycle aslinya punya belasan status, dan **sebagian besar perpindahannya
 bukan klik**. Timeout, webhook, cron job jam 3 pagi. Penyewa yang tidak jadi
 bayar, vendor yang tidak konfirmasi, barang yang tidak dikembalikan — tidak
 satu pun menghasilkan event. Ketiadaan itu sendiri yang jadi event.
 
-### Pembatalan itu jam, bukan tombol
+### Pembatalan berdasarkan jam, bukan tombol
 
-Order bisa mati karena didiamkan di empat titik, dan batas waktunya mengikuti
+Order bisa batal karena didiamkan di empat titik, dan batas waktunya mengikuti
 janji ke penyewa:
 
 | Jenis booking | Vendor konfirmasi | Vendor kirim |
@@ -99,7 +99,7 @@ Yang akhirnya rilis, bukan aturan elegan, tapi aturan eksplisit:
 Bukan aturan terbaik. Aturan yang bisa dijelaskan satu kalimat ke tim support,
 dan perilaku sebelumnya tidak bisa.
 
-### Kegagalan diberi jalan pulih, bukan cuma baris log
+### Kegagalan diberi jalan keluar, bukan cuma baris log
 
 Sewa lewat jatuh tempo punya polis asuransi yang diperpanjang cron job satu
 hari sekali. Job itu memanggil pihak ketiga, jadi cepat atau lambat pasti

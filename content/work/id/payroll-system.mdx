@@ -32,13 +32,13 @@ yang tidak punya alasan untuk percaya pada saya?** Dari situ lahir tiga syarat:
 
 ## Perjalanannya
 
-2024, sistem payroll untuk perusahaan sendiri — internal, skala kecil. Jalan
-benar selama setahun penuh. 2025, klien butuh masalah yang sama diselesaikan
-untuk 800+ karyawan. Setahun tanpa insiden itu yang jadi alasan melanjutkan
-sistem yang sudah ada, bukan menulis ulang dari nol. Yang rilis Juni 2026
-adalah kelanjutannya, bukan tulisan ulang.
+2024, sistem payroll untuk perusahaan sendiri — internal, skala kecil. Dikembangkan
+selama 6 bulan, lalu bug-bug di fitur utamanya diperbaiki sampai stabil di kuartal
+pertama 2025. Maret 2025, klien butuh masalah yang sama diselesaikan untuk 800+
+karyawan. Saya melanjutkan arsitektur sistem yang sudah stabil dari proyek internal
+itu, bukan menulis ulang dari nol.
 
-Lompatan skalanya yang mengubah cara kerja teknisnya: payroll 40 orang masih
+Lompatan skalanya yang mengubah cara kerja teknisnya: payroll 10 orang masih
 bisa dicek manual, 800 orang tidak — jadi sistemnya sendiri yang harus bisa
 mempertanggungjawabkan hasilnya.
 
@@ -127,12 +127,12 @@ tonase, waste, ketepatan pengiriman. Data itu bukan milik saya, tidak datang
 saat diminta, dan tidak selalu benar.
 
 Jadi ditarik terjadwal ke tabel staging sebelum periode payroll, bukan saat run
-berjalan. Payroll run tidak pernah menggantung menunggu pihak ketiga hidup;
+berjalan. Payroll run tidak pernah bergantung kepada pihak ketiga;
 data yang salah kelihatan **sebelum** jadi slip gaji dan bisa ditarik ulang
 tanpa menyentuh payroll; kaitan antara angka dan record asalnya tetap ada,
-jadi masih bisa dijelaskan nanti. Tarifnya sendiri pemetaan, bukan perhitungan
+jadi masih bisa dijelaskan nanti. Tarifnya sendiri adalah sebuah pemetaan, bukan perhitungan
 — hasil produksi dipetakan ke tabel tarif berjenjang, jadi negosiasi tarif
-baru itu perubahan data, bukan tiket ke saya.
+baru itu perubahan data, bukan bug yang harus dilaporkan ke saya.
 
 ### Tidak ada yang final sebelum bisa direview manusia
 
@@ -143,12 +143,12 @@ diberi tahap review sebelum final.
 THR dihitung dulu ke rekap tersendiri yang direview dan disetujui bagian
 keuangan *sebelum* masuk ke slip gaji siapa pun. Payroll run dikunci prasyarat
 yang dicek sistem sendiri: absensi lengkap, data hulu sudah ditarik, cuti,
-lembur, dan surat sanksi sudah disetujui. Dulu itu pengetahuan lisan siapa pun
-yang menjalankan payroll bulan lalu; sekarang checklist yang dievaluasi dan
-ditampilkan sistem.
+lembur, dan surat sanksi sudah disetujui. Dulu siapa pun yang menjalankan payroll
+harus mencari tahu sendiri apa saja yang sudah beres; sekarang sistem menjawabnya
+lewat checklist yang dievaluasi dan ditampilkan otomatis.
 
 Mode kegagalan yang dicegah spesifik dan mahal: run yang selesai sukses di
-atas data belum lengkap. Tidak ada error apa pun — angkanya saja yang salah,
+data yang belum lengkap. Tidak ada error apa pun — angkanya saja yang salah,
 dan tidak ada yang tahu sampai orang-orang dibayar.
 
 ### Aturan pajak sebagai data, bukan kode
@@ -201,7 +201,7 @@ ditelusuri balik ke data dan keputusan yang menghasilkannya.
 - Rilis **Juni 2026**, produksi untuk **800+ karyawan**.
 - Sampai sekarang masih saya yang rawat — untuk sistem payroll, itu sendiri
   sebuah verdict: sistem yang buruk bukan diganti diam-diam, tapi diganti
-  *dengan ribut*.
+  *dengan kekacauan*.
 - Sistem internal 2024 tetap jadi basis arsitekturnya, sekarang dipakai lintas
   proyek klien.
 - Dikerjakan sambil memimpin 2 proyek dan 2 engineer, termasuk scoping

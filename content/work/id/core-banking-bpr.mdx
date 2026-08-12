@@ -24,8 +24,8 @@ Tahun 2022 saya pegang sistem kredit untuk Bank Perkreditan Rakyat, dari commit
 pertama sampai serah terima. Proyek pertama yang saya kerjakan sendiri dari
 awal, di bidang yang tidak menoleransi kesalahan sekecil apa pun.
 
-Produknya kredit karyawan: perusahaan bekerja sama dengan BPR, karyawannya
-mengajukan kredit dengan jaminan gaji, HRD memverifikasi pemohon, BPR yang
+Produknya kredit karyawan: perusahaan bekerja sama dengan BPR, karyawan dari mitra BPR
+mengajukan kredit dengan jaminan gaji, HRD dari mitra BPR memverifikasi pemohon, BPR yang
 memutuskan. Tiga pihak, tiga portal, satu sistem.
 
 Di sistem perbankan tidak ada bug yang sifatnya cuma tampilan. Angka yang salah
@@ -33,7 +33,7 @@ itu utang seseorang, dan yang menanggungnya tahu lebih dulu daripada kita.
 
 ## Yang sebenarnya dihasilkan sistem ini
 
-Kebanyakan sistem menghasilkan layar. Yang ini menghasilkan **perjanjian**.
+Kebanyakan sistem menghasilkan tampilan. Yang ini menghasilkan **perjanjian**.
 
 Di ujung pengajuan yang disetujui, sistem menerbitkan **PKS**: perjanjian
 antara bank, perusahaan, dan debitor, berisi pokok pinjaman, jangka waktu,
@@ -43,7 +43,7 @@ proses sebelumnya ada untuk memastikan isinya benar.
 **Ketentuan komersial itu data per tenant, bukan kode.** Tiap perusahaan mitra
 didaftarkan dengan tabel bunga dan skema biayanya sendiri. Kalau di-*hardcode*,
 tiap mitra baru berarti deploy ulang — dan lebih buruk, terbuka satu kelas bug
-di mana angka di layar dan angka di perjanjian bisa berbeda.
+di mana angka di tampilan dan angka di perjanjian bisa berbeda.
 
 **Penolakan final dan senyap.** Pengajuan yang ditolak HRD tidak pernah sampai
 ke antrean BPR. Satu baris logika, tapi itu yang membedakan analis bank yang
