@@ -291,6 +291,61 @@ export const en = {
   },
 
   /**
+   * "Tanya tentang Royhan" — the RAG chatbot embedded in the Hero (see
+   * components/chat/*). `suggestedPrompts` and `faq.items` are deliberately
+   * paired: the same questions appear as starter chips in the live widget
+   * and as the statically-rendered FAQ block right below Hero, so the two
+   * surfaces reinforce each other instead of drifting apart.
+   */
+  askRoyhan: {
+    askBar: {
+      placeholder: "Ask about Royhan…",
+      heading: "Ask about Royhan",
+      close: "Close chat",
+    },
+    greeting: "Ask me anything about Royhan's career, projects, or stack.",
+    placeholder: "Type your question…",
+    disclaimer:
+      "Answers are generated from this site's own content and may be incomplete or imprecise.",
+    send: "Send",
+    stop: "Stop",
+    retry: "Retry",
+    errorGeneric: "Something went wrong. Please try again.",
+    errorRateLimit: "Too many questions — try again in a minute.",
+    suggestedPrompts: [
+      "What's Royhan's tech stack?",
+      "Tell me about the payroll system project.",
+      "Is Royhan available for contract work?",
+      "Why did Royhan stay at one company for 7 years?",
+    ],
+    faq: {
+      heading: "Frequently asked questions",
+      items: [
+        {
+          question: "What's Royhan's tech stack?",
+          answer:
+            "React.js, Next.js, Flutter, and TypeScript on the frontend; Node.js, Express.js, NestJS, and Sequelize.js on the backend; MySQL, Docker, and AWS SQS for infrastructure. He picks tools that stay boring under pressure rather than chasing what's newest.",
+        },
+        {
+          question: "Tell me about the payroll system project.",
+          answer:
+            "A payroll engine for 800+ employees, covering Indonesian PPh 21 tax (TER method), BPJS, and PP 58/2023 — every run idempotent, every figure traceable back to its inputs through a generic audit trail across ten entities. Royhan took it from a small internal system in 2024 to full production in June 2026, and still maintains it.",
+        },
+        {
+          question: "Is Royhan available for contract work?",
+          answer:
+            "Yes — he's remote-first, based in WIB (UTC+7), and open to EOR, contract, or full-time arrangements with a two-week notice period. Best fit: systems where a wrong number has real financial or legal consequence — payroll, lending, compliance.",
+        },
+        {
+          question: "Why did Royhan stay at one company for 7 years?",
+          answer:
+            "Not passion for code specifically — he stayed because the longer he worked, the more people ended up depending on his output being correct, and that responsibility mattered more to him than switching jobs would have. Three promotions later (Junior to Team Lead), he's still there, now leading systems other people's paychecks and debts depend on.",
+        },
+      ],
+    },
+  },
+
+  /**
    * Written for what this site actually does, not templated from a generator —
    * a personal site with three data points (a locale cookie, a geo header read
    * once at the edge, and cookieless aggregate analytics) doesn't need the
@@ -323,6 +378,12 @@ export const en = {
           "Counts visits and popular pages. Runs without cookies and isn't tied to you individually.",
         retention: "Per Vercel's own retention policy",
       },
+      {
+        item: 'Questions you type into the "Ask about Royhan" chatbot',
+        purpose:
+          "Processed to generate an answer, sent to Groq (the AI inference provider) as part of the request.",
+        retention: "Not stored after the response is sent — no conversation logs are persisted.",
+      },
     ],
     notCollectedHeading: "What this site doesn't do",
     notCollectedItems: [
@@ -334,6 +395,7 @@ export const en = {
     thirdPartyParagraphs: [
       "The site is hosted on Vercel, which also runs the cookieless analytics mentioned above. Their practices are documented in Vercel's own privacy policy.",
       "The email, WhatsApp, and LinkedIn links in the header and footer send you to those services directly — I don't see anything that happens on their side.",
+      'The "Ask about Royhan" chatbot sends your question to Groq to generate a response, and checks a hashed, short-lived record of your IP address against Upstash to limit how many questions can be asked per minute — not to track you.',
     ],
     choicesHeading: "Your choices",
     choicesParagraphs: [

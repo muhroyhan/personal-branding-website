@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { Hero } from "@/components/sections/hero";
+import { FaqAccordion } from "@/components/chat/faq-accordion";
 import { ActOneBeginnings } from "@/components/sections/act-one-beginnings";
 import { ActTwoBanking } from "@/components/sections/act-two-banking";
 import { ActThreeInherited } from "@/components/sections/act-three-inherited";
@@ -38,6 +39,7 @@ export default async function Home({
     <>
       <StoryRail dict={dict} />
       <Hero locale={locale} dict={dict} />
+      <FaqAccordion locale={locale} dict={dict} />
 
       <ScrollReveal>
         <ActOneBeginnings dict={dict} />

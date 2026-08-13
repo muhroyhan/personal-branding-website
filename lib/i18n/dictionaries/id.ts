@@ -297,6 +297,53 @@ export const id: Dictionary = {
     privacy: "Privasi",
   },
 
+  askRoyhan: {
+    askBar: {
+      placeholder: "Tanya tentang Royhan…",
+      heading: "Tanya tentang Royhan",
+      close: "Tutup obrolan",
+    },
+    greeting: "Tanya apa saja soal karier, proyek, atau stack saya.",
+    placeholder: "Ketik pertanyaan…",
+    disclaimer: "Jawaban dihasilkan dari isi situs ini sendiri, bisa saja kurang lengkap atau kurang presisi.",
+    send: "Kirim",
+    stop: "Berhenti",
+    retry: "Coba lagi",
+    errorGeneric: "Ada masalah. Coba lagi ya.",
+    errorRateLimit: "Terlalu banyak pertanyaan. Coba lagi dalam semenit.",
+    suggestedPrompts: [
+      "Apa tech stack Royhan?",
+      "Ceritakan tentang proyek sistem payroll.",
+      "Apakah Royhan terbuka untuk kerja kontrak?",
+      "Kenapa Royhan bertahan 7 tahun di satu perusahaan?",
+    ],
+    faq: {
+      heading: "Pertanyaan yang sering ditanyakan",
+      items: [
+        {
+          question: "Apa tech stack Royhan?",
+          answer:
+            "Frontend: React.js, Next.js, Flutter, TypeScript. Backend: Node.js, Express.js, NestJS, Sequelize.js. Infra: MySQL, Docker, AWS SQS. Saya pilih tool yang tetap stabil waktu sistem sedang ramai, bukan yang paling baru.",
+        },
+        {
+          question: "Ceritakan tentang proyek sistem payroll.",
+          answer:
+            "Sistem payroll untuk 800+ karyawan, mencakup PPh 21 (metode TER), BPJS, dan PP 58/2023. Setiap run idempoten, setiap angka bisa dilacak balik ke sumbernya lewat audit trail generik di sepuluh entitas. Saya bangun dari sistem internal kecil di 2024 sampai rilis produksi penuh Juni 2026, dan masih saya rawat sampai sekarang.",
+        },
+        {
+          question: "Apakah Royhan terbuka untuk kerja kontrak?",
+          answer:
+            "Ya. Saya remote-first, di WIB (UTC+7), terbuka untuk EOR, kontrak, atau full-time dengan notice period dua minggu. Paling cocok untuk sistem yang salah angkanya berkonsekuensi hukum atau finansial — payroll, kredit, compliance.",
+        },
+        {
+          question: "Kenapa Royhan bertahan 7 tahun di satu perusahaan?",
+          answer:
+            "Bukan karena passion menulis kode. Saya bertahan karena makin lama saya di bidang ini, makin banyak orang bergantung pada hasil kerja saya. Tiga promosi kemudian (Junior sampai Team Lead), saya masih di sana, sekarang memimpin sistem yang gaji dan utang orang lain bergantung padanya.",
+        },
+      ],
+    },
+  },
+
   privacy: {
     pageHeading: "Kebijakan Privasi",
     lastUpdated: "Terakhir diperbarui: Agustus 2026",
@@ -323,6 +370,12 @@ export const id: Dictionary = {
           "Menghitung jumlah kunjungan dan halaman populer. Berjalan tanpa cookie dan tidak terkait ke Anda secara individu.",
         retention: "Mengikuti kebijakan retensi Vercel sendiri",
       },
+      {
+        item: 'Pertanyaan yang Anda ketik ke chatbot "Tanya tentang Royhan"',
+        purpose:
+          "Diproses untuk menghasilkan jawaban, dikirim ke Groq (penyedia inferensi AI) sebagai bagian dari permintaan.",
+        retention: "Tidak disimpan setelah jawaban terkirim — tidak ada log percakapan yang disimpan.",
+      },
     ],
     notCollectedHeading: "Yang tidak dilakukan situs ini",
     notCollectedItems: [
@@ -334,6 +387,7 @@ export const id: Dictionary = {
     thirdPartyParagraphs: [
       "Situs ini di-hosting di Vercel, yang juga menjalankan analytics tanpa cookie di atas. Kebijakan mereka ada di dokumentasi privasi Vercel sendiri.",
       "Tautan email, WhatsApp, dan LinkedIn di header dan footer membawa Anda langsung ke layanan tersebut. Saya tidak melihat apa pun yang terjadi di sisi mereka.",
+      'Chatbot "Tanya tentang Royhan" mengirim pertanyaan Anda ke Groq untuk menghasilkan jawaban, dan memeriksa catatan alamat IP yang di-hash dan berumur sangat singkat ke Upstash untuk membatasi jumlah pertanyaan per menit — bukan untuk melacak Anda.',
     ],
     choicesHeading: "Pilihan Anda",
     choicesParagraphs: [

@@ -17,12 +17,33 @@ Open [http://localhost:3000](http://localhost:3000).
 ## Scripts
 
 ```bash
-npm run dev     # start dev server
-npm run build   # production build
-npm run start   # run production build
-npm run lint    # eslint
-npx tsc --noEmit  # typecheck only, no output
+npm run dev          # start dev server
+npm run build        # production build
+npm run start        # run production build
+npm run lint         # eslint
+npx tsc --noEmit     # typecheck only, no output
+npm run rag:collect  # print chunk counts from the "Tanya tentang Royhan" RAG source pipeline (no output file)
+npm run rag:build    # (re)generate lib/rag/index.json — see below
+npm run test:rag     # unit tests for the RAG ingestion/chunking script
 ```
+
+### Rebuilding the RAG chatbot's search index
+
+`lib/rag/index.json` is the embedding index the "Tanya tentang Royhan" chatbot
+retrieves from at request time (`app/api/chat/route.ts`) — a static, committed
+JSON file, not something regenerated per request or as part of `next build`.
+
+Run `npm run rag:build` and commit the resulting `lib/rag/index.json` whenever:
+- Any `content/work/*.mdx` or `content/writing/*.mdx` file changes.
+- `lib/i18n/dictionaries/{en,id}.ts` (`hero`, `acts`, `architecture`,
+  `dichotomy`, `whoFor`, `privacy`) changes.
+- `lib/constants.ts` (tech stack, contact links) or `public/llms.txt` changes.
+
+The first run downloads the `Xenova/multilingual-e5-small` embedding model
+(~118MB, quantized) into `.rag-models/` (gitignored, not committed —
+subsequent runs reuse the cached weights). This is a local/CI-time step with
+normal network access; it is deliberately kept separate from the app's
+request path, which never fetches the model over the network at runtime.
 
 ## Branch flow
 
@@ -61,10 +82,14 @@ The steps below need dashboard/OAuth access that only the repo owner has. Do the
    - Neither rule exists yet; both need to be created manually, don't assume they're already active.
 
 5. **Register environment variables in Vercel — Production *and* Preview**
-   - See `.env.example` for the full list (currently just `NEXT_PUBLIC_SITE_URL`).
+   - See `.env.example` for the full list.
    - Vercel project → Settings → Environment Variables → add `NEXT_PUBLIC_SITE_URL`:
      - **Production**: the real production domain (custom domain once set, or the `*.vercel.app` URL otherwise).
      - **Preview**: either the same production URL, or leave it unset — sitemap/robots/JSON-LD on preview deployments aren't indexed by anyone, so it matters far less there. Just don't leave *Production* unset, or those artifacts silently fall back to `http://localhost:3000`.
+   - Also add the "Tanya tentang Royhan" chatbot vars (server-only, no `NEXT_PUBLIC_` prefix — set for both Production and Preview so the preview deployment checklist in Task 10 can actually be run):
+     - `GROQ_API_KEY` — from [console.groq.com/keys](https://console.groq.com/keys).
+     - `GROQ_MODEL` — `openai/gpt-oss-20b` (see `.env.example` for fallback options and the deprecated models to avoid).
+     - `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` — from an [Upstash](https://console.upstash.com) Redis database (free tier).
    - Redeploy after adding it (env var changes don't apply to already-built deployments).
 
 6. **Enable Vercel Analytics**

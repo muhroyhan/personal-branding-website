@@ -22,6 +22,10 @@ of the English text.
 ## Pages
 
 - [Home](/) · [Beranda](/id): five-act career narrative, tech stack, contact.
+  Also embeds "Ask about Royhan" — an interactive Q&A widget in the hero,
+  grounded in this site's own content (RAG over the case studies, essays,
+  and career narrative below), plus a static FAQ section with the same
+  answers for crawlers that don't run the widget.
 - [Work](/work) · [Proyek](/id/work): case studies of production systems.
 - [Payroll system](/work/payroll-system): flagship case study — scope
   resolution engine, idempotent payroll runs, PPh 21 TER / BPJS / PP 58/2023,

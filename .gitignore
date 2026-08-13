@@ -43,3 +43,7 @@ next-env.d.ts
 
 # claude
 .claude
+
+# RAG chatbot: local embedding model cache (downloaded by `npm run rag:build`,
+# never committed — lib/rag/index.json is the committed artifact)
+/.rag-models/
