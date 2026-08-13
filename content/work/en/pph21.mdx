@@ -1,0 +1,99 @@
+---
+title: "pph21 — Indonesian Payroll Tax as a Package"
+slug: "pph21"
+summary: "Open-source PPh 21 and BPJS calculator for Node.js and the browser, published to npm. Nine employee types, TER and Article 17, versioned per tax year, every result auditable back to its regulation."
+tech: ["TypeScript", "Vitest", "dayjs", "tsup", "semantic-release"]
+date: "2026-08-07"
+period: "2026 · Open Source"
+featured: false
+links:
+  github: "https://github.com/muhroyhan/pph21"
+  npm: "https://www.npmjs.com/package/pph21"
+---
+
+| | |
+|---|---|
+| **Role** | Sole author — design, implementation, verification |
+| **Status** | Published on npm as `pph21`, MIT licensed, semantic-released from `main` |
+| **Domain** | PPh 21 (PMK 168/2023), BPJS, PMK 105/2025 DTP incentive |
+| **Stack** | TypeScript, Vitest, dayjs, tsup |
+| **Tests** | 8 suites — every employee type, TER table integrity, progressive brackets, BPJS, DTP |
+
+## Why this exists
+
+[Payroll for 800+ Employees](/work/payroll-system) has PPh 21 and BPJS buried
+inside a NestJS app, coupled to its database and queues. That's correct for a
+production system, but it means the tax logic — the part that's genuinely
+hard and genuinely reusable — can't be picked up by another project, reviewed
+in isolation, or open-sourced on its own.
+
+`pph21` is that logic extracted, generalised past a single client's rules to
+all nine employee categories PMK 168/2023 actually defines, and published as
+a standalone package. The interesting problem was never wiring it into an
+app — it's getting Indonesian payroll tax *right*, which is less a formula
+than nine overlapping rule sets that change on the government's schedule, not
+mine.
+
+## Decisions
+
+### One field selects the rule set
+
+`employeeType` is a discriminated union — `pegawai-tetap`, `bukan-pegawai`,
+`peserta-kegiatan`, `dewan-komisaris`, and five more — and TypeScript narrows
+the rest of the input to match. A freelancer's honorarium and a permanent
+employee's monthly salary are taxed by genuinely different rules (50% × gross
+× Pasal 17 vs. gross × TER Bulanan); collapsing them into one generic
+`calculate(input)` would hide that difference behind optional fields nobody
+could reason about. Nine calculators, one entry point, no ambiguity about
+which rule fired.
+
+### Constants are versioned by tax year, not overwritten
+
+PTKP amounts, TER tables, Article 17 brackets, BPJS ceilings — every
+statutory figure lives in `src/constants/`, keyed by year in
+`tax-years.ts`. A new tax year is a new config object that copies the prior
+year forward and overrides only what changed; nothing is mutated in place.
+That's the same principle [the payroll system](/work/payroll-system) applies
+with admin-editable constants — the difference is this is a library with no
+database, so the audit trail is git history and `CHANGELOG.md` instead of a
+table.
+
+### Every result explains itself
+
+The return type isn't a number — it's `dpp`, `method`, `ter` category and
+rate where relevant, a line-item `breakdown` in bukti-potong order, and a
+`regulation` string citing the legal basis. A number with no method attached
+is a support ticket waiting to happen; a number that already carries its own
+derivation isn't.
+
+### Verified against the regulation PDF, not a calculator site
+
+Two independent secondary sources consulted while building the TER tables
+had silently wrong TER B/C brackets — close enough to pass a casual glance,
+wrong enough to misfile someone's withholding. Every table is checked against
+the official PMK/PP text directly, backed by table-integrity assertions
+(non-decreasing rates, contiguous boundaries) and golden tests reproduced
+from DJP's own published worked examples — `pph21` for the quick-start case
+matches the DJP example to the rupiah.
+
+### The 2026 DTP incentive as an opt-in, not a special case
+
+PMK 105/2025 introduces a government-covered tax incentive (PPh 21 DTP) for
+2026, effective only under specific income conditions. Rather than branching
+the core calculators, it's a second config object (`dtp: { eligible,
+baselineMonthlyGross }`) layered on top — when it applies, `pph21` zeroes out
+and the amount moves to `dtpAmount`. The calculators that predate the
+incentive don't know it exists.
+
+## Result
+
+- Published and installable: `npm install pph21`.
+- CI-verified releases — every push to `main` is versioned by
+  [semantic-release](https://semantic-release.gitbook.io/) from Conventional
+  Commits; no hand-edited version numbers.
+- `CONSTANTS.md` documents exactly which file to touch for a given
+  regulation change, so a future tax-year update doesn't require re-reading
+  the source to find it.
+- Deliberately scoped: PPh 26 for non-resident expatriates, e-Bupot XML
+  generation, and multi-employer year-end consolidation are named out of
+  scope in the README rather than half-built in.

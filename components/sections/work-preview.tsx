@@ -47,7 +47,8 @@ export async function WorkPreview({
   dict: Dictionary;
 }) {
   const allWork = await getAllWork(locale);
-  const items = allWork.slice(0, 2);
+  const featured = allWork.filter((item) => item.frontmatter.featured);
+  const items = (featured.length ? featured : allWork).slice(0, 2);
   const t = dict.work;
 
   return (

@@ -1,0 +1,100 @@
+---
+title: "pph21 — Pajak Payroll Indonesia Jadi Package"
+slug: "pph21"
+summary: "Kalkulator PPh 21 dan BPJS open source untuk Node.js dan browser, dipublikasikan ke npm. Sembilan jenis pegawai, TER dan Pasal 17, versioned per tahun pajak, setiap hasil bisa dilacak ke dasar hukumnya."
+tech: ["TypeScript", "Vitest", "dayjs", "tsup", "semantic-release"]
+date: "2026-08-07"
+period: "2026 · Open Source"
+featured: false
+links:
+  github: "https://github.com/muhroyhan/pph21"
+  npm: "https://www.npmjs.com/package/pph21"
+---
+
+| | |
+|---|---|
+| **Peran** | Penulis tunggal — desain, implementasi, verifikasi |
+| **Status** | Terbit di npm sebagai `pph21`, lisensi MIT, rilis otomatis dari `main` |
+| **Domain** | PPh 21 (PMK 168/2023), BPJS, insentif PPh 21 DTP PMK 105/2025 |
+| **Stack** | TypeScript, Vitest, dayjs, tsup |
+| **Test** | 8 suite — semua jenis pegawai, integritas tabel TER, bracket progresif, BPJS, DTP |
+
+## Kenapa dibuat
+
+Di [Sistem Payroll 800+ Karyawan](/id/work/payroll-system), logika PPh 21 dan
+BPJS terkubur di dalam aplikasi NestJS, menempel ke database dan queue-nya.
+Itu wajar untuk sistem produksi, tapi artinya bagian yang paling sulit dan
+paling bisa dipakai ulang — logika pajaknya sendiri — tidak bisa diambil
+proyek lain, di-review terpisah, atau dijadikan open source.
+
+`pph21` adalah logika itu, diekstrak dan digeneralisasi melampaui aturan satu
+klien ke sembilan kategori pegawai yang diatur PMK 168/2023, lalu
+dipublikasikan sebagai package berdiri sendiri. Bagian sulitnya bukan
+menyambungkannya ke aplikasi — tapi memastikan hitungan pajak payroll
+Indonesia *benar*, yang ternyata bukan satu formula, melainkan sembilan
+aturan yang saling tumpang tindih dan berubah menurut jadwal pemerintah,
+bukan jadwal saya.
+
+## Keputusan
+
+### Satu field menentukan aturan mana yang berlaku
+
+`employeeType` adalah discriminated union — `pegawai-tetap`, `bukan-pegawai`,
+`peserta-kegiatan`, `dewan-komisaris`, dan lima lainnya — TypeScript
+menyempitkan sisa input agar sesuai. Honorarium freelancer dan gaji bulanan
+pegawai tetap dikenai aturan yang benar-benar berbeda (50% × bruto × Pasal 17
+vs. bruto × TER Bulanan); kalau digabung jadi satu `calculate(input)` generik,
+perbedaan itu bersembunyi di balik field opsional yang tidak bisa
+dipertanggungjawabkan siapa pun. Sembilan kalkulator, satu entry point, tidak
+ada ambiguitas soal aturan mana yang berjalan.
+
+### Konstanta di-versioned per tahun pajak, bukan ditimpa
+
+Nilai PTKP, tabel TER, bracket Pasal 17, batas atas BPJS — setiap angka resmi
+ada di `src/constants/`, diberi kunci per tahun di `tax-years.ts`. Tahun pajak
+baru berarti objek konfigurasi baru yang menyalin tahun sebelumnya dan hanya
+meng-override yang berubah; tidak ada yang diubah di tempat. Prinsipnya sama
+dengan konstanta yang bisa diedit admin di
+[sistem payroll](/id/work/payroll-system) — bedanya ini library tanpa
+database, jadi audit trail-nya git history dan `CHANGELOG.md`, bukan tabel.
+
+### Setiap hasil menjelaskan dirinya sendiri
+
+Return type-nya bukan sekadar angka — ada `dpp`, `method`, kategori dan rate
+`ter` kalau relevan, `breakdown` per baris sesuai urutan bukti potong, dan
+string `regulation` yang mengutip dasar hukumnya. Angka tanpa metode yang
+menyertainya adalah tiket support yang menunggu waktu; angka yang sudah
+membawa penjelasannya sendiri tidak.
+
+### Diverifikasi ke PDF peraturan, bukan situs kalkulator
+
+Dua sumber sekunder independen yang dicek saat membangun tabel TER ternyata
+diam-diam salah di bracket TER B/C — cukup mirip untuk lolos dari sekilas
+pandang, cukup salah untuk mengacaukan potongan pajak seseorang. Setiap tabel
+diverifikasi langsung ke teks resmi PMK/PP, didukung assertion integritas
+tabel (rate tidak menurun, batas kontigu) dan golden test yang direproduksi
+dari contoh perhitungan resmi DJP — hasil `pph21` untuk contoh di quick-start
+cocok sampai ke angka rupiah dengan contoh DJP.
+
+### Insentif DTP 2026 sebagai opsi tambahan, bukan kasus khusus
+
+PMK 105/2025 memperkenalkan insentif pajak DTP (ditanggung pemerintah) untuk
+2026, berlaku hanya pada kondisi penghasilan tertentu. Daripada mencabangkan
+kalkulator inti, insentif ini jadi objek konfigurasi kedua (`dtp: { eligible,
+baselineMonthlyGross }`) yang ditumpuk di atas — saat berlaku, `pph21`
+menjadi nol dan jumlahnya pindah ke `dtpAmount`. Kalkulator yang sudah ada
+sebelum insentif ini tidak perlu tahu insentif ini ada.
+
+## Hasil
+
+- Terbit dan siap dipasang: `npm install pph21`.
+- Rilis terverifikasi CI — setiap push ke `main` di-versioned otomatis oleh
+  [semantic-release](https://semantic-release.gitbook.io/) berdasarkan
+  Conventional Commits; tidak ada nomor versi yang diubah manual.
+- `CONSTANTS.md` mendokumentasikan persis file mana yang harus disentuh untuk
+  perubahan peraturan tertentu, jadi update tahun pajak berikutnya tidak
+  perlu membaca ulang source code untuk mencarinya.
+- Sengaja dibatasi ruang lingkupnya: PPh 26 untuk ekspatriat non-resident,
+  generate XML e-Bupot, dan konsolidasi akhir tahun multi-pemberi-kerja
+  disebutkan eksplisit sebagai di luar cakupan di README, bukan dibangun
+  setengah jadi.

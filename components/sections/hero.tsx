@@ -3,6 +3,7 @@
 import { Fragment } from "react";
 import Link from "next/link";
 import { motion, type Variants } from "motion/react";
+import { HeroAskBar } from "@/components/chat/hero-ask-bar";
 import { Term } from "@/components/ui/term-tooltip";
 import { ProfilePhoto } from "@/components/ui/profile-photo";
 import { LiveBlueprint } from "@/components/motifs/live-blueprint";
@@ -122,6 +123,11 @@ export function Hero({ locale, dict }: { locale: Locale; dict: Dictionary }) {
         <Term definition={t.termTwo.definition}>{t.termTwo.label}</Term>
         {t.leadAfter}
       </motion.p>
+
+      {/* "Tanya tentang Royhan" ask bar — eager but featherweight (Task 7);
+          the chat panel itself only loads once the user actually interacts
+          (Task 8), so this costs nothing on first paint. */}
+      <HeroAskBar locale={locale} dict={dict} />
 
       {/* The résumé PDF has been sitting in `public/` unlinked. A recruiter who
           wants the one-page version should never have to ask for it. */}

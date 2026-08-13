@@ -1,9 +1,19 @@
 # Personal Branding Website
 
-Muhammad Royhan — Tech Lead / Senior Software Engineer portfolio site.
+Muhammad Royhan — Tech Lead / Senior Software Engineer portfolio site, live in production.
 
 Stack: Next.js 15 (App Router) + React 19 + TypeScript + Tailwind CSS v4 + shadcn/ui.
 See [`ai_dev_doc.md`](./ai_dev_doc.md) for full architecture/design decisions and the task breakdown (`PBW-XX`).
+
+## What this is
+
+A bilingual (EN/ID) portfolio and case-study site, including:
+
+- Work and writing case studies authored as MDX (`content/work/`, `content/writing/`)
+- "Tanya tentang Royhan" — a RAG-powered chatbot (Groq + Upstash Redis rate limiting) that answers questions about Royhan grounded in the site's own content
+- Full SEO surface: sitemap, robots, locale-aware OG images, JSON-LD `Person` schema, `llms.txt` for LLM crawlers
+- Automated versioning and releases via semantic-release, with the live version shown in the footer
+- CI on every PR (lint, typecheck, build) and Vercel preview deployments
 
 ## Getting Started
 
@@ -17,12 +27,52 @@ Open [http://localhost:3000](http://localhost:3000).
 ## Scripts
 
 ```bash
-npm run dev     # start dev server
-npm run build   # production build
-npm run start   # run production build
-npm run lint    # eslint
-npx tsc --noEmit  # typecheck only, no output
+npm run dev          # start dev server
+npm run build        # production build
+npm run start        # run production build
+npm run lint         # eslint
+npx tsc --noEmit     # typecheck only, no output
+npm run rag:collect  # print chunk counts from the "Tanya tentang Royhan" RAG source pipeline (no output file)
+npm run rag:build    # (re)generate lib/rag/index.json — see below
+npm run test:rag     # unit tests for the RAG ingestion/chunking script
+npm run vercel-build # what Vercel actually runs: rag:build, then next build — see below
 ```
+
+### Rebuilding the RAG chatbot's search index
+
+`lib/rag/index.json` is the embedding index the "Tanya tentang Royhan" chatbot
+retrieves from at request time (`app/api/chat/route.ts`) — a static JSON file,
+not something regenerated per *request*.
+
+Locally, run `npm run rag:build` and commit the resulting `lib/rag/index.json`
+whenever:
+- Any `content/work/*.mdx` or `content/writing/*.mdx` file changes.
+- `lib/i18n/dictionaries/{en,id}.ts` (`hero`, `acts`, `architecture`,
+  `dichotomy`, `whoFor`, `privacy`) changes.
+- `lib/constants.ts` (tech stack, contact links) or `public/llms.txt` changes.
+
+**On Vercel, this happens automatically on every deploy anyway**: Vercel
+detects the `vercel-build` script in `package.json` (`rag:build && next
+build`) and runs that instead of the plain `build` script, with no dashboard
+setting required. This is deliberate, not just a safety net for content
+changes — the embedding model weights themselves (`.rag-models/`, ~118MB) are
+gitignored and never committed, so a fresh Vercel checkout has nothing in
+that directory. `rag:build` downloads them fresh during the build step
+(which has normal network access), so `next build`'s
+`outputFileTracingIncludes` (see `next.config.ts`) has something to bundle
+into the deployed function — without this, the function would fall back to
+fetching the model from the Hugging Face CDN at cold start instead, which is
+exactly the runtime network dependency this whole caching strategy exists to
+avoid. Net effect: the committed `lib/rag/index.json` is a local/dev
+convenience (lets you run `next dev` without waiting on a rebuild), not the
+production source of truth — Vercel always regenerates it fresh from
+whatever's on the deployed branch.
+
+The first local run downloads the `Xenova/multilingual-e5-small` embedding
+model (~118MB, quantized) into `.rag-models/` (gitignored, not committed —
+subsequent runs reuse the cached weights). This is a local/CI-time step with
+normal network access; it is deliberately kept separate from the app's
+request path, which never fetches the model over the network at runtime.
 
 ## Branch flow
 
@@ -34,54 +84,13 @@ daily work → PR into develop → merge develop → PR develop into main → me
 - `main` only ever receives PRs from `develop`. Merging to `main` is a release.
 - `.github/workflows/ci.yml` runs on every PR targeting **either** `develop` or `main`: install deps → lint → typecheck → `next build`. All four must pass before merge — this is a quality gate only, it does not deploy anything. (Before PBW-17 this only ran against `main`, so daily PRs into `develop` weren't checked — fixed here.)
 
-## Manual setup required (cannot be automated from here)
+## Environment variables
 
-The steps below need dashboard/OAuth access that only the repo owner has. Do these once, manually:
+See `.env.example` for the full list, registered in Vercel for both Production and Preview:
 
-1. **Push `main` to GitHub**
-   - `origin` currently only has `develop` pushed (verified via `git ls-remote origin` — no `refs/heads/main` yet). Push it:
-     ```bash
-     git push -u origin main
-     ```
-   - Until `main` exists on GitHub, you can't open a `develop` → `main` PR, and the branch-protection rule for `main` (step 4) can't be created.
-
-2. **Connect the repo to Vercel (Git Integration)**
-   - Go to [vercel.com/new](https://vercel.com/new), sign in with GitHub, and import the `personal-branding-website` repo.
-   - Framework preset: Next.js (auto-detected). Leave build/output settings as default.
-   - Deploy. This gives you the free `*.vercel.app` domain and automatic deployments for every push/PR.
-
-3. **Verify Vercel's Production Branch is `main`, not `develop`**
-   - Vercel project → Settings → Git → **Production Branch**. Vercel defaults this to whatever branch you imported from — if that was `develop`, it needs to be changed to `main`, otherwise every merge to `develop` would redeploy production instead of just generating a preview.
-   - I can't check or change this from here (dashboard-only setting) — please confirm it reads `main` before treating any deploy as final.
-   - With it set correctly: PRs and pushes to `develop` get preview deployments only; only a push to `main` (i.e., merging the release PR) updates the production URL.
-
-4. **Branch protection (GitHub repo → Settings → Branches)**
-   - Rule for `develop`: require the `CI / Lint, typecheck, build` status check to pass before merging.
-   - Rule for `main`: require the same status check to pass **and** require the branch to be up to date with `develop` before merging (the "Require branches to be up to date before merging" option) — this stops a stale `main` PR from merging after `develop` has moved on.
-   - Neither rule exists yet; both need to be created manually, don't assume they're already active.
-
-5. **Register environment variables in Vercel — Production *and* Preview**
-   - See `.env.example` for the full list (currently just `NEXT_PUBLIC_SITE_URL`).
-   - Vercel project → Settings → Environment Variables → add `NEXT_PUBLIC_SITE_URL`:
-     - **Production**: the real production domain (custom domain once set, or the `*.vercel.app` URL otherwise).
-     - **Preview**: either the same production URL, or leave it unset — sitemap/robots/JSON-LD on preview deployments aren't indexed by anyone, so it matters far less there. Just don't leave *Production* unset, or those artifacts silently fall back to `http://localhost:3000`.
-   - Redeploy after adding it (env var changes don't apply to already-built deployments).
-
-6. **Enable Vercel Analytics**
-   - Vercel project → Analytics tab → Enable. It's privacy-friendly by default (no cookies, no consent banner needed).
-   - Until this is enabled, the `/_vercel/insights/script.js` the site requests will 404 — that's expected and harmless (confirmed via Lighthouse during PBW-14/16: it doesn't affect functionality, only a `best-practices` audit point locally, and resolves automatically once Analytics is turned on).
-
-7. **Submit to Google Search Console**
-   - [search.google.com/search-console](https://search.google.com/search-console) → Add property → use the same domain as `NEXT_PUBLIC_SITE_URL`.
-   - Verify ownership (Vercel supports the DNS or HTML-file methods; the HTML-meta-tag method also works by adding a `verification` field to `app/layout.tsx`'s `metadata.other` if needed).
-   - Submit `sitemap.xml` (already generated at `/sitemap.xml`) under Sitemaps.
-
-8. **Submit to Bing Webmaster Tools**
-   - [bing.com/webmasters](https://www.bing.com/webmasters) → Add site → same domain.
-   - Bing Webmaster Tools can also **import verified sites directly from Google Search Console** (faster than manual verification) if step 7 is done first.
-   - Submit the same `sitemap.xml` URL.
-
-Once steps 1–2 are done, every PR will show both the GitHub Actions CI check and a Vercel preview deployment link automatically.
+- `NEXT_PUBLIC_SITE_URL` — canonical production URL, used by the sitemap, robots, and JSON-LD.
+- `GROQ_API_KEY` / `GROQ_MODEL` — the "Tanya tentang Royhan" chatbot's inference provider.
+- `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` — Upstash Redis, used for chatbot rate limiting.
 
 ## Release checklist (every merge to `main`)
 
@@ -111,12 +120,3 @@ On each qualifying push to `main`, `semantic-release` (config: `.releaserc.json`
 - JSON-LD `Person` schema in `app/[locale]/layout.tsx` (name, jobTitle, `sameAs` → LinkedIn/GitHub), plus `alternates.languages` in `generateMetadata` for hreflang
 - `public/llms.txt` — plain-text site summary for LLM crawlers, kept in sync with both locales manually (not generated)
 - `/privacy` — plain-language privacy notice (locale cookie, IP-derived redirect, cookieless Vercel Analytics), linked from the footer, not the primary nav
-
-## Content backlog (owner-only — can't be automated or guessed)
-
-These are already wired up in code as graceful no-ops, not blockers, but nothing shows on the live site until you do them:
-
-- **Profile photo**: drop a ~480×480 square image at `public/images/profile.jpg`. `ProfilePhoto` (`components/ui/profile-photo.tsx`) renders nothing until the file 200s.
-- **Video intro**: drop an MP4 at `public/videos/intro.mp4`. `VideoIntro` (`components/ui/video-intro.tsx`) same graceful-degrade pattern.
-- **Testimonials**: add entries to `TESTIMONIALS` in `lib/testimonials.ts` (empty array today). The section renders nothing at all until it has at least one.
-- **Business-impact numbers**: each case study (`content/work/{en,id}/*.mdx`) has a `<!-- TODO(business-impact) -->` comment marking where one real, concrete number belongs (turnaround time, dispute count, hours saved). Deliberately left unfilled rather than guessed — don't publish a number that isn't real.
