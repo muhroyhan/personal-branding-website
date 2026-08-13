@@ -99,7 +99,7 @@ See `.env.example` for the full list, registered in Vercel for both Production a
 3. Confirm CI is green on that PR.
 4. Merge (only after branch-protection's "up to date" check passes — see step 4 above).
 5. `.github/workflows/release.yml` runs on the resulting push to `main` and calls [semantic-release](https://semantic-release.gitbook.io/), which decides the version by itself from the commit messages merged in — nothing to fill in by hand. It's a no-op (no tag, no release) if none of the commits since the last release warrant one.
-6. Open the Vercel dashboard → Deployments → confirm the new production deployment succeeded (not just "Building") and the production URL actually serves the new commit. Because semantic-release pushes its own version-bump commit back to `main`, expect **two** deployments per release: one for the merge, one for that follow-up commit — the second is the one that actually serves the bumped version.
+6. Open the Vercel dashboard → Deployments → confirm the new production deployment succeeded (not just "Building") and the production URL actually serves the new commit. Semantic-release pushes its own version-bump commit back to `main`, but `vercel.json`'s `ignoreCommand` skips building that follow-up `[skip ci]` commit, so only the merge itself deploys — the deployed build won't show the bumped `APP_VERSION` in the footer until the *next* release, since the version bump commit itself is never deployed on its own.
 
 ### Versioning
 
@@ -110,7 +110,9 @@ Fully automatic — there is no version number to type in anywhere. It runs on t
 - `feat!:`, `fix!:`, or a `BREAKING CHANGE:` footer → major release (`0.1.0` → `1.0.0`)
 - Anything else (`chore:`, `docs:`, `style:`, `refactor:` without `!`, etc.) → no release
 
-On each qualifying push to `main`, `semantic-release` (config: `.releaserc.json`) computes the next version from those commit messages, then: bumps `version` in `package.json`, updates `CHANGELOG.md`, commits both back to `main` as `chore(release): X.Y.Z [skip ci]` (the `[skip ci]` stops that commit from re-triggering `release.yml`), tags it `vX.Y.Z`, and publishes a GitHub Release with generated notes. `lib/version.ts` re-exports `package.json#version` as `APP_VERSION`, which the footer links to `${REPO_URL}/releases` on every page, including the homepage — so the live site always reflects the latest published release once that second deploy (see step 6 above) lands.
+On each qualifying push to `main`, `semantic-release` (config: `.releaserc.json`) computes the next version from those commit messages, then: bumps `version` in `package.json`, updates `CHANGELOG.md`, commits both back to `main` as `chore(release): X.Y.Z [skip ci]` (the `[skip ci]` stops that commit from re-triggering `release.yml`, and `vercel.json`'s `ignoreCommand` stops it from triggering a Vercel deploy too), tags it `vX.Y.Z`, and publishes a GitHub Release with generated notes. `lib/version.ts` re-exports `package.json#version` as `APP_VERSION`, which the footer links to `${REPO_URL}/releases` on every page, including the homepage.
+
+Trade-off of skipping that commit's deploy: the footer's `APP_VERSION` only advances on the *next* deploy that actually ships code (the following feature/fix merge), not immediately when the version bump commit lands — it's cosmetically one release behind for a short window rather than an extra no-op production deploy on every release.
 
 ## SEO artifacts
 
