@@ -30,8 +30,9 @@ Branch flow: kerja harian → PR ke `develop` → merge → PR `develop` ke `mai
 | Konten | `next-mdx-remote` (RSC variant), `gray-matter`, `remark-gfm` | case study & esai ditulis sebagai `.mdx` + frontmatter |
 | Analytics | `@vercel/analytics` | dipasang di root layout, tanpa cookie banner |
 | Utility | `clsx`, `tailwind-merge` | lewat `lib/utils.ts` |
+| RAG chatbot | `ai`, `@ai-sdk/groq`, `@ai-sdk/react`, `@huggingface/transformers`, `@upstash/redis`, `@upstash/ratelimit` | lihat §10 |
 
-Tidak ada database, tidak ada backend API selain route metadata Next.js (`sitemap.ts`, `robots.ts`, `opengraph-image.tsx`). Semua konten statis, di-generate saat build (`generateStaticParams` untuk tiap locale).
+Satu-satunya backend API sungguhan adalah `app/api/chat/route.ts` (Node runtime, bukan Edge) untuk chatbot RAG — lihat §10. Selain itu tidak ada database, tidak ada API lain kecuali route metadata Next.js (`sitemap.ts`, `robots.ts`, `opengraph-image.tsx`). Semua konten lain statis, di-generate saat build (`generateStaticParams` untuk tiap locale).
 
 ---
 
@@ -54,10 +55,12 @@ app/
         ├── page.tsx
         └── [slug]/page.tsx
 
+app/api/chat/route.ts               # endpoint chatbot RAG, Node runtime (lihat §10)
 middleware.ts                       # geo-redirect + locale rewrite (lihat §4)
 
 components/
 ├── sections/       # tiap section homepage (act-one..act-five, work-preview, testimonials, who-for, tech-stack, contact-cta, architecture-story)
+├── chat/           # widget "Tanya tentang Royhan": hero-ask-bar, chat-conversation, chat-icons, faq-accordion (lihat §10)
 ├── story/          # story-rail (progress nav), act-heading
 ├── motion/         # scroll-reveal, carved-text — wrapper animasi reusable
 ├── motifs/         # SVG dekoratif: blueprint-grid, live-blueprint, meander-rule, lambda-mark, act-silhouette
@@ -71,21 +74,32 @@ content/
 ├── work/{en,id}/*.mdx        # case study, slug = nama file
 └── writing/{en,id}/*.mdx     # esai, slug = nama file
 
+scripts/rag/                        # pipeline build-time indexing chatbot (lihat §10)
+├── collect-sources.ts              # kumpulkan + chunk semua sumber konten
+├── build-index.ts                  # generate lib/rag/index.json (npm run rag:build)
+└── *.test.ts
+
 lib/
 ├── constants.ts               # data language-independent: anchor, urutan act, contact links, tech stack list
 ├── testimonials.ts            # array kosong sampai diisi manual
 ├── mdx.ts                     # loader + parser MDX, locale fallback ke English
 ├── utils.ts                   # cn() helper
+├── rag/
+│   ├── index.json               # vector index statis, di-commit ke repo (lihat §10)
+│   ├── retrieve.ts              # retrieval runtime: embed query, cosine similarity, relevance gate
+│   └── retrieve.test.ts
 └── i18n/
     ├── config.ts                # LOCALES, path helpers (localePath, switchLocalePath)
-    ├── dictionaries/{en,id}.ts  # SEMUA prose/copy UI
+    ├── dictionaries/{en,id}.ts  # SEMUA prose/copy UI, termasuk dict.askRoyhan (§10)
     └── index.ts                 # getDictionary(), fill() interpolation
 
 types/work.ts, types/writing.ts   # tipe frontmatter MDX
 public/
-├── llms.txt                     # ringkasan situs untuk AI crawler
+├── llms.txt                     # ringkasan situs untuk AI crawler, juga di-index chatbot (§10)
 ├── royhan-resume.pdf
 └── images/, videos/             # taruh profile.jpg / intro.mp4 di sini untuk aktivasi (§7)
+
+.rag-models/                        # cache model embedding, gitignored — lihat §10
 ```
 
 ---
@@ -163,10 +177,78 @@ Semua warna/font/type-scale didefinisikan sekali di `app/globals.css` sebagai CS
 - **`ArchitectureStory` grid vs block**: wrapper dua-kolomnya sengaja `lg:grid` (bukan grid dari mobile) karena grid-container membuat sticky child terjebak setinggi grid area-nya sendiri dan tidak pernah nge-pin. Kalau mau ubah layout ini, baca komentar di file itu dulu.
 - **`svh` bukan `vh`** dipakai di step-height `ArchitectureStory` — `vh` akan lompat-lompat di mobile saat browser chrome collapse/expand pas scroll.
 - **CI jalan di PR ke `develop` *dan* `main`** (bukan cuma `main`) — kalau nambah workflow baru, jangan scope cuma ke `main`, itu pola lama yang sudah sengaja diperbaiki.
+- **`lib/rag/index.json` bukan build artifact biasa** — dia di-commit ke git sengaja (bukan digenerate tiap `next build`, bukan di `.gitignore`). Kalau lihat file JSON besar di root `lib/rag/`, itu bukan sampah, itu data chatbot — lihat §9.1 sebelum menghapus/mengabaikannya di PR review.
+- **`.rag-models/` gitignored tapi wajib ada saat deploy** — diisi otomatis lewat script `vercel-build` di `package.json` (§9.1), bukan sesuatu yang perlu diaktifkan manual di Vercel dashboard. Kalau chatbot tiba-tiba lambat/gagal di production karena mencoba fetch model dari Hugging Face CDN saat cold start, cek dulu apakah `vercel-build` masih ada & tidak sengaja terhapus, baru cek `outputFileTracingIncludes` di `next.config.ts` (§9.4).
 
 ---
 
-## 9. Kalau kamu mau...
+## 9. RAG chatbot — "Tanya tentang Royhan"
+
+Widget tanya-jawab di dalam Hero, dijawab oleh LLM (Groq) yang dibatasi hanya boleh menjawab dari konten situs ini sendiri (RAG = retrieval-augmented generation). Tidak ada vector DB terkelola — korpusnya kecil (~110 chunk), jadi index-nya cukup satu file JSON statis + cosine similarity brute-force di JS.
+
+Dua alur yang harus dipahami terpisah: **build-time** (bikin index, manual, jarang jalan) dan **runtime** (jawab pertanyaan user, tiap request).
+
+### 9.1 Build-time: bikin `lib/rag/index.json`
+
+```
+scripts/rag/collect-sources.ts     scripts/rag/build-index.ts
+  baca semua sumber       ──▶        embed tiap chunk         ──▶   lib/rag/index.json
+  + chunking + overlap               (Xenova/multilingual-e5-small)  (di-commit ke repo)
+```
+
+- **`collect-sources.ts`** — mengumpulkan teks dari: MDX case study & esai (`content/work`, `content/writing`, kedua locale), `public/llms.txt`, prosa dictionary (`hero`, `acts`, `architecture`, `dichotomy`, `whoFor`, `privacy`), dan fakta terstruktur dari `lib/constants.ts` (tech stack, contact) yang ditulis manual jadi kalimat deklaratif per locale. **Sengaja tidak pernah membaca** `content/copy-draft.md`, `ai_dev_doc.md`, atau `lib/testimonials.ts` — itu bukan sengaja lupa, itu information-disclosure control (lihat komentar `FORBIDDEN_TEXT_PATTERN` di file yang sama). Lalu setiap dokumen dipecah jadi chunk ~150–300 kata dengan overlap ~25 kata antar-chunk bersebelahan (supaya kalimat yang bersandar ke paragraf sebelumnya tidak kehilangan makna kalau diretrieve sendirian).
+- **`build-index.ts`** (`npm run rag:build`) — embed tiap chunk pakai model `Xenova/multilingual-e5-small` lewat `@huggingface/transformers` (jalan di CPU, tanpa GPU), prefix `"passage: "` (konvensi E5 — lihat §9.4), lalu tulis `{ generatedAt, model, chunks: [{ id, text, source, url, locale, title, embedding }] }` ke `lib/rag/index.json`.
+- **Lokal**: wajib dijalankan manual & di-commit ulang setiap kali MDX, dictionary yang di-index, atau `lib/constants.ts` berubah — index **tidak** digenerate otomatis saat `next build` biasa (`npm run build`). Lupa rebuild = `next dev`/`next start` lokal menjawab dari konten lama.
+- **Di Vercel beda ceritanya**: `package.json` punya script `vercel-build` (`rag:build && next build`) yang otomatis dipakai Vercel menggantikan `build` biasa (konvensi Vercel, tanpa perlu ubah setting apa pun di dashboard) — jadi index **selalu** di-generate ulang tiap deploy, terlepas dari `lib/rag/index.json` yang di-commit sudah basi atau belum. Ini bukan cuma jaring pengaman konten: `.rag-models/` (bobot model, lihat baris berikutnya) gitignored, jadi checkout Vercel yang bersih tidak punya folder itu sama sekali — `rag:build` di build step-lah yang mengisinya, supaya `outputFileTracingIncludes` (`next.config.ts`) punya sesuatu untuk di-bundle ke function. Tanpa ini, function production akan mencoba fetch model dari Hugging Face CDN saat cold start, bukan dari cache lokal.
+- Model weight (~118MB, quantized `q8`) di-cache di `.rag-models/` (gitignored) — kalau belum ada, `rag:build` akan download dari Hugging Face Hub otomatis di run pertama (lokal maupun di build Vercel).
+
+### 9.2 Runtime: jawab satu pertanyaan
+
+```
+ChatConversation          POST /api/chat                 lib/rag/retrieve.ts
+(useChat, client)   ──▶   route.ts (Node runtime)   ──▶   embed query + cosine
+                             │  │                          similarity ke semua
+                             │  └─ rate limit (Upstash)     chunk index.json
+                             │
+                             ├─ relevance gate (§9.3) ── gagal? balas deterministik,
+                             │                            Groq TIDAK pernah dipanggil
+                             ▼
+                        streamText() (Groq) + system prompt berisi
+                        top-K chunk berlabel sumber ──▶ stream balik ke client
+                        (data-citations part + text part)
+```
+
+Urutan validasi di `route.ts`, dari paling murah ke paling mahal (setiap langkah bisa menolak sebelum langkah berikutnya jalan): method guard (native Next.js, cuma `POST` yang di-export) → `Origin`/`Referer` harus cocok `SITE_URL` → parse & validasi body (locale whitelist `en`/`id`, panjang pesan ≤500 char, riwayat dipotong ke 10 pesan terakhir) → rate limit (15 req/menit/IP, key di-hash SHA-256 sebelum masuk Upstash, **fail-open** kalau Upstash down) → `retrieveTopK` → relevance gate → `streamText`.
+
+### 9.3 Relevance gate — kenapa bukan cosine similarity mentah
+
+`lib/rag/retrieve.ts` mengekspor `RELEVANCE_THRESHOLD` yang dibandingkan ke **z-score** top-1 (`topRelevance`), bukan skor cosine mentah (`topScore`). Sudah dicoba pakai cosine mentah dulu — gagal, karena model `multilingual-e5-small` punya baseline similarity yang tinggi & sempit untuk teks apa pun, sampai-sampai query off-topic ("resep nasi goreng") bisa skor lebih tinggi dari query on-topic. Z-score (skor top-1 dibanding rata-rata+std seluruh index untuk query yang sama) memisahkan cluster on-topic/off-topic jauh lebih baik. **Kalau nanti mau utak-atik threshold ini, baca komentar panjang di atas `RELEVANCE_THRESHOLD` dulu** — di situ ada tabel kalibrasi empiris lengkap, jangan tebak angka baru tanpa mengulang proses itu.
+
+Query yang lolos gate tapi jawabannya tetap tidak ada di konteks (mis. "siapa istri Royhan?") ditangani lapisan kedua: instruksi system prompt (`buildSystemPrompt` di `route.ts`) yang eksplisit melarang mengarang fakta di luar konteks yang diretrieve.
+
+### 9.4 Detail yang gampang salah kalau nambah fitur di sini
+
+- **`useChat` versi ini (AI SDK v7 / `@ai-sdk/react` v4) tidak mengelola state input sendiri** — beda dari tutorial/contoh lama yang masih pakai `input`/`handleInputChange`. Teks dipegang manual lewat `useState` di `ChatConversation`, submit lewat `sendMessage({ text })`.
+- **Prefix E5 asimetris**: dokumen di-embed dengan `"passage: "` (build-time), query dengan `"query: "` (runtime, di `embedQuery()`). Ketuker salah satu → kualitas retrieval turun drastis tanpa error apa pun yang kelihatan.
+- **Sitasi cuma boleh datang dari `data-citations` part** yang dikirim server (`route.ts`) — `ChatConversation` sengaja tidak pernah parse URL dari teks jawaban LLM. Ini kontrol keamanan (cegah LLM yang "dijailbreak" bikin link palsu), bukan sekadar gaya kode — jangan "disederhanakan" jadi regex parse.
+- **`HeroAskBar` dan `ChatConversation` sengaja dua komponen terpisah** (`components/chat/`): `HeroAskBar` eager (tanpa dependency AI SDK), `ChatConversation` di-lazy-load lewat `next/dynamic({ ssr: false })` baru saat user pertama kali berinteraksi. Jangan gabungkan jadi satu file — itu akan menyeret `@ai-sdk/react` masuk ke initial bundle Hero.
+- **`ChatConversation` tidak pernah unmount saat panel di-collapse** — `HeroAskBar` menjaganya tetap mounted (cuma disembunyikan lewat CSS grid-row) supaya histori percakapan tidak hilang kalau user tutup-buka lagi.
+- **`next.config.ts` punya `outputFileTracingIncludes` untuk `.rag-models/`** — wajib ada karena `@huggingface/transformers` membaca folder model lewat scan filesystem dinamis, bukan `import`/`require` statis, jadi Next's file tracer tidak otomatis mendeteksinya untuk deployment Vercel. Jangan dihapus tanpa alasan kuat.
+- **Semua string UI widget** (`placeholder`, `suggestedPrompts`, `faq.items`, pesan error) ada di `dict.askRoyhan` (§4 — pola dictionary yang sama berlaku di sini).
+
+### 9.5 Debugging cepat
+
+| Gejala | Cek dulu |
+|---|---|
+| Chatbot jawab dari konten lama/salah | Sudah `npm run rag:build` ulang setelah edit MDX/dictionary/constants? Sudah di-commit `lib/rag/index.json`-nya? |
+| Semua pertanyaan kena respons "di luar cakupan" | `RELEVANCE_THRESHOLD` kegedean, atau index kosong/corrupt — cek `lib/rag/index.json` ter-generate benar |
+| 500 di `/api/chat` lokal | Cek `.env`/`.env.local` punya `GROQ_API_KEY`, `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` — tanpa itu beberapa jalur (bukan semua, rate-limiter fail-open) akan gagal |
+| 403 terus-terusan saat testing lokal | `Origin` header request harus persis sama dengan `NEXT_PUBLIC_SITE_URL` (default `http://localhost:3000`) — port dev server kamu beda? |
+| Build gagal soal `@huggingface/transformers` di client bundle | Pastikan modul itu cuma diimpor dari `app/api/chat/route.ts` dan `scripts/rag/*`, tidak pernah dari `components/chat/*` |
+
+---
+
+## 10. Kalau kamu mau...
 
 | Mau ngapain | Mulai dari |
 |---|---|
@@ -178,3 +260,7 @@ Semua warna/font/type-scale didefinisikan sekali di `app/globals.css` sebagai CS
 | Aktifkan foto/video/testimoni | §7 "Placeholder graceful-degrade" |
 | Tambah locale baru (mis. bahasa ketiga) | `lib/i18n/config.ts` (`LOCALES`), dictionary baru, `content/*/**` folder baru, cek ulang logic `middleware.ts` |
 | Nambah link nav | `components/layout/navbar.tsx` (`navLinks`) + `footer.tsx` + label baru di kedua dictionary |
+| Chatbot jawab dari konten terbaru | `npm run rag:build` lalu commit `lib/rag/index.json` (§9.1) |
+| Tambah/ubah sumber yang boleh dijawab chatbot | `scripts/rag/collect-sources.ts`, lalu `npm run rag:build` (§9.1) |
+| Ubah teks widget chatbot (placeholder, chip, FAQ) | `dict.askRoyhan` di kedua dictionary (§4, §9.4) |
+| Debug kenapa chatbot menolak/salah jawab | §9.5 |

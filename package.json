@@ -9,7 +9,8 @@
     "lint": "eslint",
     "rag:collect": "tsx scripts/rag/collect-sources.ts",
     "rag:build": "tsx scripts/rag/build-index.ts",
-    "test:rag": "node --import tsx --test scripts/rag/**/*.test.ts lib/rag/**/*.test.ts"
+    "test:rag": "node --import tsx --test scripts/rag/**/*.test.ts lib/rag/**/*.test.ts",
+    "vercel-build": "npm run rag:build && next build"
   },
   "dependencies": {
     "@ai-sdk/groq": "^4.0.28",
